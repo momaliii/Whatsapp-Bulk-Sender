@@ -118,7 +118,11 @@ let workerStartIntervalId = null;
 let waitingFlowsIntervalId = null;
 let extractEvictIntervalId = null;
 
-// Server Start
+// Export app for Hostinger lsnode (which uses require() - see server.cjs wrapper)
+export { app };
+
+// Server Start - skip when loaded by lsnode (LiteSpeed)
+if (!process.env.LSNODE) {
 server.listen(PORT, () => {
   logger.info(`Server listening on http://localhost:${PORT}`);
   
@@ -227,6 +231,7 @@ server.listen(PORT, () => {
     }
   })();
 });
+}
 
 // Handle process exit
 process.on('SIGINT', async () => {

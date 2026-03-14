@@ -19,6 +19,7 @@
   "dependencies": {
     "@wppconnect/wa-js": "^3.20.1",
     "archiver": "^7.0.1",
+    "esm": "^3.2.25",
     "sql.js": "^1.11.0",
     "cors": "^2.8.5",
     "csv-parse": "^6.1.0",

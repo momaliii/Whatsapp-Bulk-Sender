@@ -6,15 +6,21 @@
 import fs from 'fs';
 import path from 'path';
 
-let useSqlJs = false;
-try {
-  await import('better-sqlite3');
-} catch {
-  useSqlJs = true;
+let useSqlJs = null; // null = not yet determined (avoids top-level await for CJS/lsnode)
+async function checkBackend() {
+  if (useSqlJs !== null) return useSqlJs;
+  try {
+    await import('better-sqlite3');
+    useSqlJs = false;
+  } catch {
+    useSqlJs = true;
+  }
+  return useSqlJs;
 }
 
 export async function createDatabase(dbPath) {
-  if (!useSqlJs) {
+  const useSql = await checkBackend();
+  if (!useSql) {
     const Database = (await import('better-sqlite3')).default;
     return new Database(dbPath);
   }
