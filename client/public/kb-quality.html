@@ -1,0 +1,499 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>KB Quality Dashboard</title>
+    <link rel="stylesheet" href="/public/nav.css" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #4f46e5;
+        --primary-600: #4f46e5;
+        --primary-700: #4338ca;
+        --success: #16a34a;
+        --danger: #dc2626;
+        --warning: #f59e0b;
+      }
+      [data-theme="dark"] {
+        --bg: #0b1220;
+        --card: #0f172a;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: #1f2a44;
+        --primary: #7c83ff;
+        --primary-600: #6366f1;
+        --primary-700: #4f46e5;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+      }
+      html {
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1000px 500px at -10% -10%, #eef2ff 0%, rgba(238,242,255,0) 60%),
+                    radial-gradient(800px 400px at 110% -20%, #fef3c7 0%, rgba(254,243,199,0) 60%),
+                    var(--bg);
+        overflow-x: hidden;
+        overflow-y: auto;
+        position: relative;
+      }
+      
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(1200px 600px at -20% -20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(1000px 500px at 120% -30%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+        animation: backgroundFloat 20s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      @keyframes backgroundFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+      }
+      .container { max-width: 1200px; margin: 20px auto; padding: 0 16px; }
+      .row { display:flex; gap:16px; flex-wrap:wrap; }
+      .card { 
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(20px) saturate(180%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      
+      .card:hover::before {
+        opacity: 1;
+      }
+      
+      .card:active {
+        transform: translateY(-2px);
+      }
+      
+      [data-theme="dark"] .card {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .kpi { display:flex; gap:16px; }
+      .kpi .box { flex:1; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; text-align:center; }
+      .kpi .value { font-size:24px; font-weight:800; margin-bottom:4px; }
+      .kpi .label { font-size:12px; color:var(--muted); font-weight:600; }
+      .kpi .sub { font-size:11px; color:var(--muted); margin-top:4px; }
+      .progress { width:100%; height:8px; border-radius:4px; background:#e5e7eb; overflow:hidden; margin:8px 0; }
+      .progress .fill { height:100%; background:var(--success); transition:width 0.3s ease; }
+      .progress.warning .fill { background:var(--warning); }
+      .progress.danger .fill { background:var(--danger); }
+      .status { padding:8px 12px; border-radius:6px; margin:8px 0; font-size:12px; font-weight:600; }
+      .status.good { background:#f0fdf4; color:#166534; border:1px solid #bbf7d0; }
+      .status.warning { background:#fffbeb; color:#b45309; border:1px solid #fed7aa; }
+      .status.danger { background:#fef2f2; color:#dc2626; border:1px solid #fecaca; }
+      .btn { border:0; background:var(--primary); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:12px; }
+      .btn.secondary { background:#64748b; }
+      .muted { color:var(--muted); font-size:12px; }
+      .inline { display:flex; gap:8px; align-items:center; }
+      table { width:100%; border-collapse:separate; border-spacing:0; background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+      th, td { padding:10px 12px; border-bottom:1px solid var(--border); text-align:left; }
+      thead th { background:#f8fafc; font-weight:700; }
+      tbody tr:nth-child(odd) td { background:#fcfcfd; }
+      tr:hover td { background:#f6f8fb; }
+      
+      /* Enhanced Button Styling */
+      .action-btn {
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      
+      .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+      
+      .action-btn:hover::before {
+        left: 100%;
+      }
+      
+      .action-btn:active {
+        transform: translateY(1px) scale(0.98);
+      }
+      
+      .action-btn.primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+      }
+      
+      .action-btn.primary:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      .action-btn.secondary {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+        color: var(--text);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+      }
+      
+      .action-btn.secondary:hover {
+        background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      /* Enhanced Animations */
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+    </style>
+  </head>
+  <body>
+    <link rel="stylesheet" href="/public/nav.css">
+    <link rel="stylesheet" href="/public/dark-theme.css">
+    <script src="/public/nav.js"></script>
+    <script src="/public/theme-init.js"></script>
+    <div class="container with-drawer">
+      <div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px 0; border-bottom: 1px solid var(--border);">
+        <div class="header-left">
+          <h2 style="margin:0; display: flex; align-items: center; gap: 12px;">
+            <span class="float-animation" style="font-size: 32px; display: inline-block;">📚</span>
+            <span>Knowledge Base</span> Quality
+          </h2>
+          <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <span class="pulse-animation" style="width: 6px; height: 6px; background: linear-gradient(45deg, #10b981, #059669); border-radius: 50%; display: inline-block;"></span>
+            Monitor knowledge base coverage and quality metrics
+          </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+          <a href="/" style="text-decoration:none;">
+            <button class="action-btn secondary" type="button" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Back to Dashboard
+            </button>
+          </a>
+          <button class="action-btn primary" type="button" onclick="rescanKB()" style="display: flex; align-items: center; gap: 8px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14,2 14,8 20,8"/></svg>
+            Rescan Uploads
+          </button>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="card" style="flex:1; min-width:320px;">
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label>Select Session</label>
+            <select id="sessionSelect" style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--text);">
+              <option value="default">Default Session (Knowledge Base Only)</option>
+            </select>
+            <small class="muted">Choose which session's knowledge base to analyze</small>
+          </div>
+          <div class="kpi">
+            <div class="box">
+              <div class="value" id="totalDocs">0</div>
+              <div class="label">Total Docs</div>
+              <div class="sub" id="totalChunks">0 chunks</div>
+            </div>
+            <div class="box">
+              <div class="value" id="coverage">0%</div>
+              <div class="label">Coverage</div>
+              <div class="progress" id="coverageBar">
+                <div class="fill" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="box">
+              <div class="value" id="deadDocs">0</div>
+              <div class="label">Dead Docs</div>
+              <div class="sub" id="avgChunkSize">0 avg size</div>
+            </div>
+          </div>
+          <div id="qualityStatus" class="status good" style="display:none;"></div>
+          <div class="inline" style="margin-top:12px;">
+            <button class="action-btn primary" onclick="refreshQuality()" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+              Refresh
+            </button>
+            <button class="action-btn secondary" onclick="exportReport()" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export Report
+            </button>
+          </div>
+        </div>
+        <div class="card" style="flex:1; min-width:320px;">
+          <h3>Quality Metrics</h3>
+          <div id="metricsList">
+            <div class="muted">Loading metrics...</div>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:16px;">
+        <div class="card" style="flex:1; min-width:320px;">
+          <h3>Recommendations</h3>
+          <div id="recommendations">
+            <div class="muted">Loading recommendations...</div>
+          </div>
+        </div>
+        <div class="card" style="flex:1; min-width:320px;">
+          <h3>Recent Activity</h3>
+          <div id="recentActivity">
+            <div class="muted">No recent activity</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      async function loadSessions() {
+        try {
+          const res = await fetch('/api/sessions');
+          const data = await res.json();
+          const sessionSelect = document.getElementById('sessionSelect');
+          
+          // Clear existing options except default
+          sessionSelect.innerHTML = '<option value="default">Default Session (Knowledge Base Only)</option>';
+          
+          // Add real sessions
+          (data.sessions || []).forEach(session => {
+            const option = document.createElement('option');
+            option.value = session.id;
+            option.textContent = `${session.id} ${session.ready ? '(ready)' : ''}`;
+            sessionSelect.appendChild(option);
+          });
+          
+          // Add event listener to reload quality when session changes
+          sessionSelect.addEventListener('change', loadQuality);
+        } catch (e) {
+          console.error('Failed to load sessions:', e);
+        }
+      }
+      
+      async function loadQuality() {
+        try {
+          const sessionId = document.getElementById('sessionSelect').value || 'default';
+          const res = await fetch(`/api/kb/quality?sessionId=${encodeURIComponent(sessionId)}`);
+          const data = await res.json();
+          
+          document.getElementById('totalDocs').textContent = data.totalDocs || 0;
+          document.getElementById('totalChunks').textContent = `${data.totalChunks || 0} chunks`;
+          document.getElementById('coverage').textContent = `${data.coverage || 0}%`;
+          document.getElementById('deadDocs').textContent = data.deadDocs || 0;
+          document.getElementById('avgChunkSize').textContent = `${data.avgChunkSize || 0} avg size`;
+          
+          // Update progress bar
+          const coverageBar = document.getElementById('coverageBar');
+          const fill = coverageBar.querySelector('.fill');
+          const coverage = data.coverage || 0;
+          fill.style.width = `${coverage}%`;
+          
+          if (coverage >= 80) {
+            coverageBar.className = 'progress';
+            fill.style.background = 'var(--success)';
+          } else if (coverage >= 50) {
+            coverageBar.className = 'progress warning';
+            fill.style.background = 'var(--warning)';
+          } else {
+            coverageBar.className = 'progress danger';
+            fill.style.background = 'var(--danger)';
+          }
+          
+          // Update quality status
+          const status = document.getElementById('qualityStatus');
+          status.style.display = 'block';
+          if (coverage >= 80 && data.deadDocs === 0) {
+            status.className = 'status good';
+            status.textContent = '✅ Knowledge base is in excellent condition';
+          } else if (coverage >= 50 && data.deadDocs < 3) {
+            status.className = 'status warning';
+            status.textContent = '⚠️ Knowledge base needs some attention';
+          } else {
+            status.className = 'status danger';
+            status.textContent = '❌ Knowledge base requires immediate attention';
+          }
+          
+          // Update metrics
+          updateMetrics(data);
+          updateRecommendations(data);
+          
+        } catch (e) {
+          console.error('Failed to load quality data:', e);
+        }
+      }
+
+      async function rescanKB() {
+        try {
+          const btns = document.querySelectorAll('button'); btns.forEach(b=>b.disabled=true);
+          const res = await fetch('/api/agent/docs/rescan', { method:'POST' });
+          const data = await res.json();
+          await loadQuality();
+          alert(`Rescan complete. Added ${data.added||0} chunks.`);
+        } catch (e) {
+          alert('KB rescan failed: ' + e.message);
+        } finally {
+          const btns = document.querySelectorAll('button'); btns.forEach(b=>b.disabled=false);
+        }
+      }
+      
+      function updateMetrics(data) {
+        const metrics = document.getElementById('metricsList');
+        const items = [
+          { label: 'Documents with embeddings', value: `${data.docsWithEmbeddings || 0}/${data.totalDocs || 0}`, status: data.coverage >= 80 ? 'good' : data.coverage >= 50 ? 'warning' : 'danger' },
+          { label: 'Average chunk size', value: `${data.avgChunkSize || 0} lines`, status: 'good' },
+          { label: 'Dead documents', value: data.deadDocs || 0, status: data.deadDocs === 0 ? 'good' : data.deadDocs < 3 ? 'warning' : 'danger' },
+          { label: 'Total content chunks', value: data.totalChunks || 0, status: 'good' }
+        ];
+        
+        metrics.innerHTML = items.map(item => `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;">${item.label}</span>
+            <span style="font-weight:600; color:var(--${item.status === 'good' ? 'success' : item.status === 'warning' ? 'warning' : 'danger'});">${item.value}</span>
+          </div>
+        `).join('');
+      }
+      
+      function updateRecommendations(data) {
+        const recs = document.getElementById('recommendations');
+        const recommendations = [];
+        
+        if (data.coverage < 80) {
+          recommendations.push('🔧 Add embeddings to more documents to improve AI responses');
+        }
+        if (data.deadDocs > 0) {
+          recommendations.push('🗑️ Remove or update dead documents with no embeddings');
+        }
+        if (data.totalDocs < 5) {
+          recommendations.push('📚 Add more documents to improve knowledge coverage');
+        }
+        if (data.avgChunkSize < 3) {
+          recommendations.push('📝 Consider longer, more detailed content chunks');
+        }
+        
+        if (recommendations.length === 0) {
+          recommendations.push('✅ Your knowledge base is well-optimized!');
+        }
+        
+        recs.innerHTML = recommendations.map(rec => `
+          <div style="padding:8px 0; border-bottom:1px solid var(--border); font-size:12px;">
+            ${rec}
+          </div>
+        `).join('');
+      }
+      
+      function refreshQuality() {
+        loadQuality();
+      }
+      
+      function exportReport() {
+        // Simple text export
+        const data = {
+          timestamp: new Date().toISOString(),
+          totalDocs: document.getElementById('totalDocs').textContent,
+          coverage: document.getElementById('coverage').textContent,
+          deadDocs: document.getElementById('deadDocs').textContent,
+          totalChunks: document.getElementById('totalChunks').textContent
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `kb-quality-report-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      // Load data on page load
+      document.addEventListener('DOMContentLoaded', async () => {
+        await loadSessions();
+        await loadQuality();
+      });
+      
+      // Auto-refresh every 30 seconds
+      setInterval(loadQuality, 30000);
+    </script>
+  </body>
+</html>

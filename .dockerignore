@@ -1,0 +1,19 @@
+node_modules
+.git
+.DS_Store
+
+# Runtime / session artifacts
+.wwebjs_auth
+.wwebjs_cache
+
+# Local data (mounted as volumes in production)
+data
+server/data
+uploads
+
+# Backups / large artifacts
+*.tar.gz
+*.log
+
+# Optional: older copy
+v1

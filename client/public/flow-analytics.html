@@ -1,0 +1,377 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flow Analytics</title>
+    <link rel="stylesheet" href="/public/nav.css" />
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #4f46e5;
+        --primary-600: #4f46e5;
+        --primary-700: #4338ca;
+        --success: #16a34a;
+        --danger: #dc2626;
+        --warning: #f59e0b;
+      }
+      [data-theme="dark"] {
+        --bg: #0b1220;
+        --card: #0f172a;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: #1f2a44;
+        --primary: #7c83ff;
+        --primary-600: #6366f1;
+        --primary-700: #4f46e5;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+      }
+      html {
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1000px 500px at -10% -10%, #eef2ff 0%, rgba(238,242,255,0) 60%),
+                    radial-gradient(800px 400px at 110% -20%, #fef3c7 0%, rgba(254,243,199,0) 60%),
+                    var(--bg);
+        overflow-x: hidden;
+        overflow-y: auto;
+        position: relative;
+      }
+      
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(1200px 600px at -20% -20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(1000px 500px at 120% -30%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+        animation: backgroundFloat 20s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      @keyframes backgroundFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+      }
+      .container { max-width: 1400px; margin: 20px auto; padding: 0 16px; }
+      .row { display:flex; gap:16px; flex-wrap:wrap; }
+      .card { 
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(20px) saturate(180%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      
+      .card:hover::before {
+        opacity: 1;
+      }
+      
+      .card:active {
+        transform: translateY(-2px);
+      }
+      
+      [data-theme="dark"] .card {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      .kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; margin-bottom:24px; }
+      .kpi-box { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; text-align:center; }
+      .kpi-value { font-size:24px; font-weight:700; color:var(--primary); margin-bottom:4px; }
+      .kpi-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+      .kpi-success { color:var(--success); }
+      .kpi-danger { color:var(--danger); }
+      .kpi-warning { color:var(--warning); }
+      .chart-container { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:16px; }
+      .chart-title { font-size:16px; font-weight:600; margin-bottom:12px; }
+      .table { width:100%; border-collapse:collapse; font-size:12px; }
+      .table th, .table td { padding:8px 12px; text-align:left; border-bottom:1px solid var(--border); }
+      .table th { background:#f8fafc; font-weight:600; color:var(--muted); }
+      .table tr:hover { background:#f8fafc; }
+      .status-badge { padding:2px 8px; border-radius:12px; font-size:10px; font-weight:600; text-transform:uppercase; }
+      .status-active { background:#f0fdf4; color:#166534; }
+      .status-inactive { background:#fef2f2; color:#dc2626; }
+      .btn { border:0; background:var(--primary); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:12px; }
+      .btn.secondary { background:#64748b; }
+      .btn.danger { background:var(--danger); }
+      .btn:disabled { opacity:0.5; cursor:not-allowed; }
+      .filter-bar { display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap; }
+      .filter-bar select, .filter-bar input { padding:6px 8px; border:1px solid var(--border); border-radius:6px; font-size:12px; }
+      .refresh-btn { background:var(--success); }
+      .muted { color:var(--muted); font-size:11px; }
+      .loading { text-align:center; padding:20px; color:var(--muted); }
+    </style>
+  </head>
+  <body>
+    <link rel="stylesheet" href="/public/nav.css">
+    <link rel="stylesheet" href="/public/dark-theme.css">
+    <script src="/public/nav.js"></script>
+    <script src="/public/theme-init.js"></script>
+    <div class="container with-drawer">
+      <div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px 0; border-bottom: 1px solid var(--border);">
+        <div class="header-left">
+          <h2 style="margin:0; display: flex; align-items: center; gap: 12px;">
+            <span class="float-animation" style="font-size: 32px; display: inline-block;">📊</span>
+            <span>Flow</span> Analytics
+          </h2>
+          <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <span class="pulse-animation" style="width: 6px; height: 6px; background: linear-gradient(45deg, #8b5cf6, #7c3aed); border-radius: 50%; display: inline-block;"></span>
+            Monitor flow performance, success rates, and execution statistics
+          </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+          <a href="/" style="text-decoration:none;">
+            <button class="action-btn secondary" type="button" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Back to Dashboard
+            </button>
+          </a>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="card" style="flex:1;">
+          
+          <div class="filter-bar">
+            <select id="sessionFilter">
+              <option value="">All Sessions</option>
+            </select>
+            <button class="btn refresh-btn" onclick="loadAnalytics()">🔄 Refresh</button>
+            <span class="muted" id="lastUpdated"></span>
+          </div>
+          
+          <div class="kpi-grid">
+            <div class="kpi-box">
+              <div class="kpi-value" id="totalFlows">-</div>
+              <div class="kpi-label">Total Flows</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-value kpi-success" id="totalExecutions">-</div>
+              <div class="kpi-label">Total Executions</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-value kpi-success" id="successRate">-</div>
+              <div class="kpi-label">Success Rate</div>
+            </div>
+            <div class="kpi-box">
+              <div class="kpi-value kpi-warning" id="avgResponseTime">-</div>
+              <div class="kpi-label">Avg Response Time</div>
+            </div>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-title">Flow Performance Chart</div>
+            <canvas id="performanceChart" width="800" height="300"></canvas>
+          </div>
+          
+          <div class="card">
+            <h3>Flow Details</h3>
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Flow Name</th>
+                  <th>Session</th>
+                  <th>Executions</th>
+                  <th>Successes</th>
+                  <th>Failures</th>
+                  <th>Success Rate</th>
+                  <th>Last Executed</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="flowsTable">
+                <tr><td colspan="8" class="loading">Loading flow analytics...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      let analyticsData = [];
+      let chart = null;
+      
+      async function loadAnalytics() {
+        try {
+          const sessionFilter = document.getElementById('sessionFilter').value;
+          const url = sessionFilter ? `/api/flows/analytics?sessionId=${sessionFilter}` : '/api/flows/analytics';
+          
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          analyticsData = data.analytics || [];
+          updateKPIs();
+          updateChart();
+          updateTable();
+          updateLastUpdated();
+        } catch (error) {
+          console.error('Failed to load analytics:', error);
+          document.getElementById('flowsTable').innerHTML = '<tr><td colspan="8" class="loading">Failed to load analytics</td></tr>';
+        }
+      }
+      
+      function updateKPIs() {
+        const totalFlows = analyticsData.length;
+        const totalExecutions = analyticsData.reduce((sum, flow) => sum + (flow.stats.executions || 0), 0);
+        const totalSuccesses = analyticsData.reduce((sum, flow) => sum + (flow.stats.successes || 0), 0);
+        const totalFailures = analyticsData.reduce((sum, flow) => sum + (flow.stats.failures || 0), 0);
+        const successRate = totalExecutions > 0 ? ((totalSuccesses / totalExecutions) * 100).toFixed(1) + '%' : '0%';
+        
+        document.getElementById('totalFlows').textContent = totalFlows;
+        document.getElementById('totalExecutions').textContent = totalExecutions;
+        document.getElementById('successRate').textContent = successRate;
+        document.getElementById('avgResponseTime').textContent = 'N/A'; // Would need timing data
+      }
+      
+      function updateChart() {
+        const canvas = document.getElementById('performanceChart');
+        const ctx = canvas.getContext('2d');
+        
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (analyticsData.length === 0) {
+          ctx.fillStyle = '#6b7280';
+          ctx.font = '14px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('No flow data available', canvas.width / 2, canvas.height / 2);
+          return;
+        }
+        
+        // Simple bar chart showing executions per flow
+        const barWidth = Math.max(20, (canvas.width - 100) / analyticsData.length);
+        const maxExecutions = Math.max(...analyticsData.map(f => f.stats.executions || 0));
+        
+        analyticsData.forEach((flow, index) => {
+          const x = 50 + index * (barWidth + 10);
+          const height = maxExecutions > 0 ? ((flow.stats.executions || 0) / maxExecutions) * (canvas.height - 100) : 0;
+          const y = canvas.height - 50 - height;
+          
+          // Bar
+          ctx.fillStyle = '#4f46e5';
+          ctx.fillRect(x, y, barWidth, height);
+          
+          // Label
+          ctx.fillStyle = '#374151';
+          ctx.font = '10px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(flow.flowName.slice(0, 8), x + barWidth/2, canvas.height - 30);
+          
+          // Value
+          ctx.fillText(flow.stats.executions || 0, x + barWidth/2, y - 5);
+        });
+        
+        // Y-axis label
+        ctx.fillStyle = '#6b7280';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('Executions', 10, 20);
+      }
+      
+      function updateTable() {
+        const tbody = document.getElementById('flowsTable');
+        
+        if (analyticsData.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="loading">No flows found</td></tr>';
+          return;
+        }
+        
+        tbody.innerHTML = analyticsData.map(flow => {
+          const executions = flow.stats.executions || 0;
+          const successes = flow.stats.successes || 0;
+          const failures = flow.stats.failures || 0;
+          const successRate = executions > 0 ? ((successes / executions) * 100).toFixed(1) + '%' : '0%';
+          const lastExecuted = flow.stats.lastExecuted ? new Date(flow.stats.lastExecuted).toLocaleString() : 'Never';
+          const status = executions > 0 ? 'active' : 'inactive';
+          
+          return `
+            <tr>
+              <td><strong>${flow.flowName}</strong></td>
+              <td>${flow.sessionId || 'All'}</td>
+              <td>${executions}</td>
+              <td class="kpi-success">${successes}</td>
+              <td class="kpi-danger">${failures}</td>
+              <td>${successRate}</td>
+              <td>${lastExecuted}</td>
+              <td><span class="status-badge status-${status}">${status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+      
+      function updateLastUpdated() {
+        document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+      }
+      
+      async function loadSessions() {
+        try {
+          const response = await fetch('/api/sessions');
+          const data = await response.json();
+          const select = document.getElementById('sessionFilter');
+          
+          select.innerHTML = '<option value="">All Sessions</option>';
+          (data.sessions || []).forEach(session => {
+            const option = document.createElement('option');
+            option.value = session.id;
+            option.textContent = `${session.id} ${session.ready ? '(ready)' : ''}`;
+            select.appendChild(option);
+          });
+        } catch (error) {
+          console.error('Failed to load sessions:', error);
+        }
+      }
+      
+      // Auto-refresh every 30 seconds
+      setInterval(loadAnalytics, 30000);
+      
+      // Load data on page load
+      loadSessions();
+      loadAnalytics();
+    </script>
+  </body>
+</html>

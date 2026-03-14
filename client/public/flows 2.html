@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flows</title>
+    <link rel="stylesheet" href="/public/nav.css" />
+    <style>
+      :root { --bg:#f6f7fb; --card:#ffffff; --text:#0f172a; --muted:#6b7280; --border:#e5e7eb; --accent:#4f46e5; }
+      body { margin:0; font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); }
+      .container { max-width: 1200px; margin: 16px auto; padding: 0 16px; }
+      .row { display:flex; gap:12px; flex-wrap:wrap; }
+      .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+      .toolbar { display:flex; justify-content: space-between; align-items:center; }
+      .muted { color:var(--muted); font-size:12px; }
+      button { border:0; background:var(--accent); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
+      input, select { border:1px solid var(--border); border-radius:10px; padding:8px 10px; }
+      #canvas { height: 520px; border:1px dashed var(--border); border-radius:12px; background:#fff; position: relative; overflow: hidden; }
+      #layer { position:absolute; inset:0; transform-origin: 0 0; }
+      #edges { position:absolute; inset:0; pointer-events:none; }
+      #edges g { transform-origin: 0 0; }
+      .node { position:absolute; min-width:180px; background:#fff; border:1px solid var(--border); border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+      .node .hd { padding:8px 10px; font-weight:700; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:move; }
+      .node .bd { padding:10px; }
+      .handle { position:absolute; width:12px; height:12px; border-radius:50%; background:#e5e7eb; border:2px solid #94a3b8; top:50%; transform: translateY(-50%); cursor:crosshair; }
+      .handle.out { right:-8px; }
+      .handle.in { left:-8px; }
+      .palette .item { background:#fff; border:1px solid var(--border); padding:8px; border-radius:10px; cursor:grab; user-select:none; }
+      .palette .item:hover { background:#f8fafc; }
+      .edge { position:absolute; pointer-events:none; }
+      .zoombar { display:flex; gap:8px; align-items:center; }
+      .zoombar button { background:#64748b; }
+    </style>
+  </head>
+  <body>
+    <script src="/public/nav.js"></script>
+    <div class="container with-drawer">
+      <div class="row">
+        <div class="card" style="flex:1; min-width:260px;">
+          <div class="toolbar">
+            <h3>Flows</h3>
+            <div>
+              <button id="newFlow">New</button>
+              <button id="saveFlow" class="secondary" style="background:#64748b;">Save</button>
+            </div>
+          </div>
+          <div style="margin:8px 0;" class="muted">Select session for execution</div>
+          <select id="sessionSel" style="width:100%;"></select>
+          <div class="palette" style="margin-top:10px; display:grid; gap:8px;">
+            <div class="item" draggable="true" data-type="send">Send Message</div>
+            <div class="item" draggable="true" data-type="wait">Wait</div>
+            <div class="item" draggable="true" data-type="media">Send Media</div>
+          </div>
+          <div style="margin-top:10px;">
+            <label class="muted">Saved flows</label>
+            <div id="flowsList" class="muted" style="max-height:200px; overflow:auto; border:1px solid var(--border); border-radius:10px; padding:6px; background:#fff;"></div>
+          </div>
+          <div style="margin-top:10px;"><button id="runFlow" style="background:#16a34a;">Run</button></div>
+        </div>
+        <div class="card" style="flex:3; min-width:520px;">
+          <div class="toolbar"><h3>Editor</h3><div class="zoombar"><button id="zoomOut">-</button><span id="zoomPct" class="muted">100%</span><button id="zoomIn">+</button><button id="zoomFit">Fit</button></div></div>
+          <div id="canvas"><div id="layer"></div><svg id="edges"><g id="edgeGroup"></g></svg></div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let current = { id: null, name: 'Untitled', session_id: null, data: { nodes: [], edges: [], steps: [] } };
+      const canvas = document.getElementById('canvas');
+      const layer = document.getElementById('layer');
+      const edgeGroup = document.getElementById('edgeGroup');
+      const sessionSel = document.getElementById('sessionSel');
+      let view = { scale: 1, tx: 0, ty: 0 };
+      function applyView(){ layer.style.transform = `translate(${view.tx}px, ${view.ty}px) scale(${view.scale})`; edgeGroup.setAttribute('transform', `translate(${view.tx},${view.ty}) scale(${view.scale})`); document.getElementById('zoomPct').textContent = Math.round(view.scale*100)+'%'; }
+      function screenToWorld(x, y){ const rect = canvas.getBoundingClientRect(); const sx = x - rect.left - view.tx; const sy = y - rect.top - view.ty; return { x: sx / view.scale, y: sy / view.scale }; }
+      function uid(){ return 'n'+Math.random().toString(36).slice(2,8); }
+
+      async function loadSessions(){
+        const res = await fetch('/api/sessions'); const d = await res.json();
+        sessionSel.innerHTML=''; (d.sessions||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=`${s.id} ${s.ready?'(ready)':''}`; sessionSel.appendChild(o); });
+      }
+      async function loadFlows(){
+        const res = await fetch('/api/flows'); const d = await res.json();
+        const list = document.getElementById('flowsList'); list.innerHTML='';
+        (d.flows||[]).forEach(f=>{ const a=document.createElement('div'); a.style.cursor='pointer'; a.textContent=`#${f.id} ${f.name}`; a.onclick=()=>openFlow(f.id); list.appendChild(a); });
+      }
+      async function openFlow(id){
+        const f = await fetch(`/api/flows/${id}`).then(r=>r.json());
+        current = { id: f.id, name: f.name, session_id: f.session_id, data: JSON.parse(f.data||'{}') };
+        sessionSel.value = current.session_id || '';
+        render();
+      }
+      function addNode(type, x, y){
+        const id = uid();
+        const node = { id, type, x, y, data: {} };
+        if (type==='send') node.data = { phone:'', message:'' };
+        if (type==='wait') node.data = { seconds:5 };
+        if (type==='media') node.data = { phone:'', caption:'', mediaPath:'' };
+        current.data.nodes.push(node); render();
+      }
+      function getNodeRect(id){ const n=(current.data.nodes||[]).find(x=>x.id===id); if(!n) return null; const w=180, h=110; return { x:n.x, y:n.y, w, h }; }
+      function getNodePort(id, side){ const r=getNodeRect(id); if(!r) return { x:0,y:0 }; return side==='out' ? { x:r.x + r.w, y: r.y + r.h/2 } : { x:r.x, y: r.y + r.h/2 }; }
+      function drawEdges(){ edgeGroup.innerHTML=''; for (const e of (current.data.edges||[])) { const a=getNodePort(e.from,'out'); const b=getNodePort(e.to,'in'); const path = document.createElementNS('http://www.w3.org/2000/svg','path'); const cx = a.x + (b.x - a.x) * 0.5; const d = `M ${a.x} ${a.y} C ${cx} ${a.y}, ${cx} ${b.y}, ${b.x} ${b.y}`; path.setAttribute('d', d); path.setAttribute('stroke', '#94a3b8'); path.setAttribute('fill','none'); path.setAttribute('stroke-width','2'); edgeGroup.appendChild(path); } }
+      let linking = { active:false, from:null, pt:null };
+
+      function render(){
+        layer.innerHTML = '';
+        for (const n of (current.data.nodes||[])){
+          const el = document.createElement('div'); el.className='node'; el.style.left=n.x+'px'; el.style.top=n.y+'px'; el.dataset.id=n.id;
+          el.innerHTML = `<div class="hd"><span>${n.type.toUpperCase()}</span><button data-del="${n.id}" style="border:0;background:transparent;color:#ef4444;font-weight:800;">×</button></div><div class="bd"></div><div class="handle in" data-in="${n.id}"></div><div class="handle out" data-out="${n.id}"></div>`;
+          const bd = el.querySelector('.bd');
+          if (n.type==='send') bd.innerHTML = `<label class="muted">Phone</label><input data-k="phone" value="${n.data.phone||''}"/><label class="muted">Message</label><input data-k="message" value="${(n.data.message||'').replace(/\"/g,'&quot;')}"/>`;
+          if (n.type==='wait') bd.innerHTML = `<label class="muted">Seconds</label><input type="number" data-k="seconds" value="${n.data.seconds||5}"/>`;
+          if (n.type==='media') bd.innerHTML = `<label class="muted">Phone</label><input data-k="phone" value="${n.data.phone||''}"/><label class="muted">Caption</label><input data-k="caption" value="${(n.data.caption||'').replace(/\"/g,'&quot;')}"/><label class="muted">Media</label><div style="display:flex; gap:6px; align-items:center;"><input data-k="mediaPath" placeholder="uploaded filename" value="${n.data.mediaPath||''}"/><input type="file" data-upload="${n.id}" style="width:140px;"></div>`;
+          let ox=0, oy=0, dx=0, dy=0; const hdr = el.querySelector('.hd');
+          hdr.addEventListener('mousedown', (e)=>{ ox=e.clientX; oy=e.clientY; dx=n.x; dy=n.y; const mm=(ev)=>{ const w=screenToWorld(ev.clientX, ev.clientY); const w0=screenToWorld(ox, oy); n.x=dx+(w.x-w0.x); n.y=dy+(w.y-w0.y); el.style.left=n.x+'px'; el.style.top=n.y+'px'; drawEdges(); }; const up=()=>{ window.removeEventListener('mousemove',mm); window.removeEventListener('mouseup',up); }; window.addEventListener('mousemove',mm); window.addEventListener('mouseup',up); });
+          el.querySelector('[data-del]')?.addEventListener('click', ()=>{ current.data.nodes=current.data.nodes.filter(x=>x.id!==n.id); current.data.edges=current.data.edges.filter(e=>e.from!==n.id && e.to!==n.id); render(); });
+          el.querySelectorAll('input').forEach(inp=>{ inp.addEventListener('input', ()=>{ const key=inp.getAttribute('data-k'); n.data[key]=inp.value; }); });
+          const up = el.querySelector('input[type="file"][data-upload]');
+          if (up) up.addEventListener('change', async ()=>{ const f=up.files&&up.files[0]; if(!f) return; const form=new FormData(); form.append('file', f); const r=await fetch('/api/upload', { method:'POST', body: form }); if(!r.ok) return alert('Upload failed'); const d=await r.json(); n.data.mediaPath = d.filename; el.querySelector('input[data-k="mediaPath"]').value = d.filename; });
+          el.querySelector('.handle.out').addEventListener('mousedown', (e)=>{ linking.from = n.id; linking.active = true; linking.pt = getNodePort(n.id, 'out'); e.stopPropagation(); });
+          el.querySelector('.handle.in').addEventListener('mouseup', (e)=>{ if (linking.active && linking.from && linking.from!==n.id) { current.data.edges.push({ from: linking.from, to: n.id }); linking = { active:false, from:null, pt:null }; drawEdges(); } e.stopPropagation(); });
+          layer.appendChild(el);
+        }
+        drawEdges();
+        applyView();
+      }
+      canvas.addEventListener('mousemove', (e)=>{ if (!linking.active || !linking.from) return; drawEdges(); const a = linking.pt || getNodePort(linking.from,'out'); const w=screenToWorld(e.clientX, e.clientY); const tmp = document.createElementNS('http://www.w3.org/2000/svg','path'); const cx = a.x + (w.x - a.x) * 0.5; tmp.setAttribute('d', `M ${a.x} ${a.y} C ${cx} ${a.y}, ${cx} ${w.y}, ${w.x} ${w.y}`); tmp.setAttribute('stroke', '#4f46e5'); tmp.setAttribute('fill','none'); tmp.setAttribute('stroke-width','2'); edgeGroup.appendChild(tmp); });
+      window.addEventListener('mouseup', ()=>{ linking = { active:false, from:null, pt:null }; });
+      canvas.addEventListener('mousedown', (e)=>{ if (e.target !== canvas) return; const s0={x:e.clientX,y:e.clientY,tx:view.tx,ty:view.ty}; const mm=(ev)=>{ view.tx = s0.tx + (ev.clientX - s0.x); view.ty = s0.ty + (ev.clientY - s0.y); applyView(); }; const up=()=>{ window.removeEventListener('mousemove',mm); window.removeEventListener('mouseup',up); }; window.addEventListener('mousemove',mm); window.addEventListener('mouseup',up); });
+      document.getElementById('zoomIn').onclick = ()=>{ view.scale = Math.min(2, view.scale*1.1); applyView(); };
+      document.getElementById('zoomOut').onclick = ()=>{ view.scale = Math.max(0.5, view.scale/1.1); applyView(); };
+      document.getElementById('zoomFit').onclick = ()=>{ view.scale=1; view.tx=10; view.ty=10; applyView(); };
+
+      document.querySelectorAll('.palette .item').forEach(it=>{ it.addEventListener('dragstart', (e)=>{ e.dataTransfer.setData('text/plain', it.getAttribute('data-type')); }); });
+      canvas.addEventListener('dragover', (e)=>{ e.preventDefault(); });
+      canvas.addEventListener('drop', (e)=>{ e.preventDefault(); const t=e.dataTransfer.getData('text/plain'); const p=screenToWorld(e.clientX, e.clientY); addNode(t, p.x-80, p.y-20); });
+
+      document.getElementById('newFlow').onclick = ()=>{ current = { id:null, name:'Untitled', session_id:null, data:{ nodes:[], edges:[], steps:[] } }; render(); };
+      function computeSteps(){
+        const nodes = [...(current.data.nodes||[])];
+        const edges = [...(current.data.edges||[])];
+        const indeg = new Map(nodes.map(n=>[n.id,0]));
+        for (const e of edges) indeg.set(e.to, (indeg.get(e.to)||0)+1);
+        const q = nodes.filter(n=> (indeg.get(n.id)||0)===0).map(n=>n.id);
+        const order = [];
+        const adj = new Map(); edges.forEach(e=>{ if(!adj.has(e.from)) adj.set(e.from,[]); adj.get(e.from).push(e.to); });
+        while(q.length){ const u=q.shift(); order.push(u); for (const v of (adj.get(u)||[])) { indeg.set(v, (indeg.get(v)||0)-1); if ((indeg.get(v)||0)===0) q.push(v); } }
+        const idToNode = new Map(nodes.map(n=>[n.id,n]));
+        const steps = [];
+        for (const id of order){ const n=idToNode.get(id); if(!n) continue; if (n.type==='wait') steps.push({ type:'wait', seconds: Number(n.data.seconds||0) }); if (n.type==='send') steps.push({ type:'send', phone: n.data.phone||'', message: n.data.message||'' }); if (n.type==='media') steps.push({ type:'send', phone: n.data.phone||'', message: n.data.caption||'', mediaPath: n.data.mediaPath||'' }); }
+        return steps;
+      }
+      document.getElementById('saveFlow').onclick = async ()=>{
+        current.session_id = sessionSel.value || null;
+        current.data.steps = computeSteps();
+        const payload = { id: current.id, name: current.name, session_id: current.session_id, data: current.data };
+        const method = current.id ? 'PUT' : 'POST';
+        const url = current.id ? `/api/flows/${current.id}` : '/api/flows';
+        const res = await fetch(url, { method, headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        const d = await res.json(); if (res.ok) { current.id = d.id || current.id; loadFlows(); alert('Saved'); } else alert(d.error||'Failed');
+      };
+      document.getElementById('runFlow').onclick = async ()=>{
+        if (!current.id) { alert('Save the flow first'); return; }
+        await fetch(`/api/flows/${current.id}/run`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: sessionSel.value||null }) });
+        alert('Triggered');
+      };
+      loadSessions();
+      loadFlows();
+      render();
+    </script>
+  </body>
+  </html>
+
+

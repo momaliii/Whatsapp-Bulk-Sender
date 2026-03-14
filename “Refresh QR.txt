@@ -1,0 +1,21 @@
+sudo apt update
+sudo apt install -y xdg-utils dbus-x11
+cd ~/whatsapp-tool
+npx pm2 restart whatsapp-tool --update-env
+
+------
+
+cd /opt/whatsapp-tool
+sudo systemctl daemon-reload
+sudo systemctl enable whatsapp-tool
+sudo systemctl start whatsapp-tool
+sudo systemctl stop whatsapp-tool
+sudo systemctl restart whatsapp-tool
+
+--------
+
+
+sudo apt install -y chromium-browser xvfb libnss3 libatk-bridge2.0-0 libatk1.0-0 \
+  libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxrandr2 libgbm1 libxss1 \
+  libasound2 libgtk-3-0
+npx pm2 restart whatsapp-tool --update-env

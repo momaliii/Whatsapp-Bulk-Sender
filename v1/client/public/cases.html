@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>قصص نجاح العملاء | واتس تول</title>
+    <meta name="description" content="10 قصص نجاح حقيقية من أسواق الخليج والعالم العربي: تجارة، عيادات، تعليم، مطاعم، عقارات، سياحة، خدمات، بنوك، توصيل، فعاليات." />
+    <style>
+      :root{--bg:#f7f8fc;--card:#fff;--text:#0f172a;--muted:#64748b;--primary:#2563eb;--border:#e2e8f0;--gradA:#2563eb;--gradB:#22c55e}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;min-height:100dvh;overflow-x:hidden;background:var(--bg);color:var(--text)}
+      .container{max-width:1120px;margin:0 auto;padding:20px}
+      @media (min-width: 1440px){ .container{max-width:1200px} }
+      a{color:inherit;text-decoration:none}
+      header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.9);backdrop-filter:blur(8px);border-bottom:1px solid var(--border)}
+      .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+      .brand{font-weight:900}
+      .brand .dot{background:linear-gradient(90deg,var(--gradA),var(--gradB));-webkit-background-clip:text;background-clip:text;color:transparent}
+      .btn{appearance:none;border:1px solid #cbd5e1;border-radius:12px;background:#fff;padding:10px 14px;cursor:pointer;font-weight:800;transition:transform .15s ease, box-shadow .2s ease}
+      .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(2,6,23,.12)}
+      .btn.primary{background:linear-gradient(135deg,var(--gradA),#1d4ed8);border-color:rgba(37,99,235,.6);color:#fff}
+      h1{font-size:32px;margin:16px 0 6px}
+      .muted{color:var(--muted)}
+      .filters{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+      .pill{padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;cursor:pointer;transition:background .2s ease}
+      .pill.active{background:#eef2ff;border-color:#c7d2fe;color:#1e40af}
+      .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+      .card{background:linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, rgba(37,99,235,.18), rgba(34,197,94,.18)) border-box;border:1px solid transparent;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 10px 24px rgba(2,6,23,.06)}
+      .logo{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;font-weight:800;width:max-content}
+      .kpis{display:flex;gap:10px;flex-wrap:wrap}
+      .kpi{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:8px 10px}
+      .kpi .num{font-weight:900;background:linear-gradient(90deg,var(--gradA),var(--gradB));-webkit-background-clip:text;background-clip:text;color:transparent}
+      .cta-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+      main{flex:1}
+      footer{display:none}
+      /* Responsive */
+      @media (max-width: 1200px){.container{padding:16px}}
+      @media (max-width: 1024px){.grid{grid-template-columns:repeat(2,1fr)}}
+      @media (max-width: 960px){.grid{grid-template-columns:1fr} .filters{gap:8px}}
+      @media (max-width: 480px){.btn{padding:8px 10px} .pill{padding:5px 8px}}
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container nav">
+        <div class="brand">واتس <span class="dot">تول</span></div>
+        <nav>
+          <a class="btn" href="/public/landing.html">الصفحة الرئيسية</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="container">
+      <h1>قصص نجاح العملاء</h1>
+      <div class="muted">نتائج عملية من 10 قطاعات في دول مختلفة. استخدم عوامل التصفية للاطلاع بسرعة على الأمثلة المناسبة لك.</div>
+
+      <div id="filters" class="filters">
+        <button class="pill active" data-filter="all">الكل</button>
+        <button class="pill" data-filter="retail">تجارة</button>
+        <button class="pill" data-filter="clinic">عيادات</button>
+        <button class="pill" data-filter="education">تعليم</button>
+        <button class="pill" data-filter="restaurant">مطاعم</button>
+        <button class="pill" data-filter="realestate">عقارات</button>
+        <button class="pill" data-filter="travel">سياحة</button>
+        <button class="pill" data-filter="services">خدمات</button>
+        <button class="pill" data-filter="delivery">توصيل</button>
+        <button class="pill" data-filter="events">فعاليات</button>
+      </div>
+
+      <div id="cards" class="grid"></div>
+      <div id="empty" class="muted" style="display:none;margin-top:10px">لا توجد نتائج لهذا الفلتر.</div>
+    </main>
+
+    
+
+    <script>
+      (function(){
+        var y=document.getElementById('y'); if (y) y.textContent = new Date().getFullYear();
+        const wa="https://wa.me/"; // TODO: replace with رقم واتساب الحقيقي
+        const cases=[
+          {id:1, seg:'retail', country:'السعودية', brand:'GulfStore', title:'تجارة إلكترونية', kpis:['+58٪ معدل الرد','+72٪ إيرادات واتساب','-60٪ وقت الفريق'], bullets:['تذكير آلي للسلة','تقسيم العملاء','وكيل أسئلة متكررة']},
+          {id:2, seg:'clinic', country:'الإمارات', brand:'CareClinic', title:'مركز طبي', kpis:['-35٪ إلغاء','+41٪ مراجعات','-70٪ زمن الرد'], bullets:['تأكيد المواعيد','استبيان رضا','تحويل فوري للبشر']},
+          {id:3, seg:'education', country:'مصر', brand:'EduPlus', title:'أكاديمية تدريب', kpis:['+33٪ إكمال التسجيل','-22٪ CAC','3× الردود'], bullets:['تأهيل المتقدمين','رسائل مواعيد','تكامل جداول']},
+          {id:4, seg:'restaurant', country:'الكويت', brand:'TasteKW', title:'سلسلة مطاعم', kpis:['+27٪ طلبات متكررة','+18٪ تذاكر أعلى','-40٪ اتصالات'], bullets:['نادي ولاء واتساب','قوالب عروض','استبيان طعم']},
+          {id:5, seg:'realestate', country:'قطر', brand:'Q-Properties', title:'وساطة عقارية', kpis:['+46٪ مواعيد مشاهدة','-30٪ زمن الاستجابة','+21٪ صفقات'], bullets:['تأهيل المهتمين','تنبيهات العقارات','تذكير مواعيد']},
+          {id:6, seg:'travel', country:'البحرين', brand:'BahrainTrips', title:'سياحة وسفر', kpis:['+38٪ حجوزات','-25٪ إلغاء','+29٪ تقييمات'], bullets:['مسارات تسعير','ردود آلية متعددة لغات','متابعة بعد الرحلة']},
+          {id:7, seg:'services', country:'عمان', brand:'FixIt Oman', title:'خدمات منزلية', kpis:['+44٪ عقود شهرية','-32٪ no-show','+35٪ رضا'], bullets:['جدولة تلقائية','تذكير الفني','التقاط موقع']},
+          {id:9, seg:'delivery', country:'تونس', brand:'DashTN', title:'شركة توصيل', kpis:['-24٪ مرتجعات','+31٪ تسليم أول مرة','-36٪ مكالمات'], bullets:['تأكيد العنوان','تعقب مباشر','استبيان بعد التسليم']},
+          {id:10, seg:'events', country:'الأردن', brand:'Eventia', title:'منظم فعاليات', kpis:['+48٪ تسجيل','+26٪ حضور','+34٪ رعاة'], bullets:['تذاكر عبر واتساب','تذكير الحضور','تقارير مباشرة']}
+        ];
+
+        function cardHtml(c){
+          return `<div class="card" data-seg="${c.seg}">
+            <div class="logo">${c.brand} • <span class="muted">${c.country}</span></div>
+            <strong>${c.title}</strong>
+            <div class="kpis">${c.kpis.map(k=>`<div class=\"kpi\"><span class=\"muted\">المؤشر</span> <div class=\"num\">${k}</div></div>`).join('')}</div>
+            <ul class="list" style="margin:0;padding:0;list-style:disc inside">${c.bullets.map(b=>`<li>${b}</li>`).join('')}</ul>
+            <div class="cta-row">
+              <a class="btn primary" href="${wa}" target="_blank" rel="noopener">تواصل عبر واتساب</a>
+              <a class="btn" href="/public/landing.html#pricing">جرّب الآن</a>
+            </div>
+          </div>`
+        }
+        const cardsEl=document.getElementById('cards');
+        cardsEl.innerHTML=cases.map(cardHtml).join('');
+
+        const pills=[...document.querySelectorAll('.pill')];
+        const empty=document.getElementById('empty');
+        function applyFilter(seg){
+          let visible=0;
+          [...cardsEl.children].forEach(ch=>{
+            const show = (seg==='all' || ch.getAttribute('data-seg')===seg);
+            ch.style.display = show ? 'block' : 'none';
+            if (show) visible++;
+          });
+          if (empty) empty.style.display = visible ? 'none' : 'block';
+        }
+        pills.forEach(p=>p.addEventListener('click',()=>{
+          pills.forEach(x=>x.classList.remove('active')); p.classList.add('active');
+          applyFilter(p.getAttribute('data-filter'));
+        }));
+        applyFilter('all');
+      })();
+    </script>
+  </body>
+  </html>
+
+

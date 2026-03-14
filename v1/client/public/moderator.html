@@ -1,0 +1,567 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Moderator Dashboard</title>
+    <link rel="stylesheet" href="/public/nav.css">
+    <link rel="stylesheet" href="/public/dark-theme.css">
+    <style>
+      :root { --sidebar: #0ea5e9; }
+      html, body { height: 100%; }
+      body { margin: 0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif; color: var(--text); background: var(--bg); overflow: hidden; }
+      .layout { height: 100dvh; display: grid; grid-template-columns: var(--sidebarWidth, 380px) 1fr; }
+      .sidebar { position: relative; background: var(--card); border-right: 1px solid var(--border); display:flex; flex-direction:column; height: 100%; overflow: hidden; box-shadow: 2px 0 8px rgba(0,0,0,0.04); }
+      .topbar { position: sticky; top: 0; z-index: 2; padding: 10px; border-bottom: 1px solid var(--border); display:grid; grid-template-columns: 140px 1fr; gap:8px; align-items:center; background: var(--card); }
+      .session-select, .search { height: 38px; border:1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 18px; padding: 8px 12px; }
+      .search { flex:1; transition: box-shadow .15s ease; }
+      .search:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+      .chat-list { flex: 1; min-height: 0; overflow-y: auto; scrollbar-color: var(--border) transparent; scrollbar-width: thin; }
+      .chat-item { display:grid; grid-template-columns: 48px 1fr auto; gap: 10px; padding: 10px 14px; cursor:pointer; border-bottom: 1px solid var(--border); align-items:center; }
+      .chat-item:hover { background: rgba(99,102,241,0.05); }
+      .chat-item.active { background: rgba(99,102,241,0.08); }
+      .avatar { width: 48px; height: 48px; border-radius: 50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:700; background: linear-gradient(135deg,#6366f1,#a855f7); }
+      .meta { min-width:0; }
+      .name-row { display:flex; justify-content:space-between; gap:8px; }
+      .name { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .time { font-size: 12px; color: var(--muted); }
+      .last { margin-top:4px; font-size: 13px; color: var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .unread { background:#22c55e; color:white; border-radius: 999px; font-size: 12px; padding: 2px 8px; justify-self:end; }
+      .content { display:flex; flex-direction:column; position: relative; }
+      .header { height: 56px; display:flex; align-items:center; gap:12px; padding: 0 16px; border-bottom: none; background: #075E54; color: #fff; position: sticky; top: 0; z-index: 1; backdrop-filter: blur(3px); }
+      .header-actions { display:flex; align-items:center; gap:8px; }
+      .btn-ghost { height:32px; padding: 6px 10px; border:1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; cursor:pointer; font-size:13px; }
+      .btn-ghost:hover { background: rgba(99,102,241,0.06); }
+      .messages { flex:1; min-height:0; display:flex; flex-direction:column; gap:12px; padding: 20px 24px; overflow-y:auto; scroll-behavior: smooth; background:
+        radial-gradient(circle at 10% 10%, rgba(0,0,0,0.02) 2px, transparent 2px) 0 0/18px 18px,
+        radial-gradient(circle at 60% 30%, rgba(0,0,0,0.015) 2px, transparent 2px) 0 0/24px 24px,
+        var(--bg);
+      }
+      .composer { background: var(--card); border-top:1px solid var(--border); padding: 12px 16px; display:grid; grid-template-columns: 1fr auto; gap:10px; position: sticky; bottom: 0; }
+      .composer textarea { width:100%; min-height: 44px; max-height: 160px; border:1px solid var(--border); border-radius: 18px; padding: 12px 14px; background: var(--bg); color: var(--text); resize: none; }
+      .send-btn { align-self:end; background: #00a884; color:white; border:none; border-radius: 18px; padding: 10px 18px; cursor:pointer; transition: filter .15s ease, opacity .15s ease; }
+      .send-btn:disabled { opacity:.6; cursor:not-allowed; filter: grayscale(.2); }
+      .icon-circle { width:40px; height:40px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background: var(--bg); border:1px solid var(--border); cursor:pointer; user-select:none; }
+      .icon-circle.active { background:#fee2e2; border-color:#ef4444; color:#b91c1c; }
+      .bubble { display:flex; }
+      .bubble.me { justify-content:flex-end; }
+      .bubble .inner { position: relative; max-width: 72%; padding: 12px 14px 18px 14px; border-radius: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.06); line-height: 1.35; }
+      .bubble.me .inner { background: #D9FDD3; color: #111827; border: 1px solid rgba(16, 185, 129, 0.2); }
+      .bubble.them .inner { background: #ffffff; color: #111827; border: 1px solid var(--border); }
+      .bubble.me .inner::after { content:''; position:absolute; right:-6px; bottom:0; width:0; height:0; border-top:8px solid #D9FDD3; border-left:8px solid transparent; }
+      .bubble.them .inner::after { content:''; position:absolute; left:-6px; bottom:0; width:0; height:0; border-top:8px solid #ffffff; border-right:8px solid transparent; }
+      .bubble .stamp { position:absolute; right:10px; bottom:4px; font-size: 11px; color: var(--muted); display:flex; align-items:center; gap:6px; }
+      .ticks { font-size: 12px; color: #9aa1b3; }
+      .ticks.sent { color: #9aa1b3; }
+      .ticks.delivered { color: #6b7280; }
+      .ticks.read { color: #34B7F1; }
+      .tooltip { position:absolute; bottom: 26px; right: 8px; background: var(--card); color: var(--text); border:1px solid var(--border); border-radius: 8px; padding: 6px 8px; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,0.12); display:none; }
+      .empty-state { flex:1; display:flex; align-items:center; justify-content:center; color: var(--muted); font-size: 14px; }
+      .msg-audio { width: 260px; }
+      .msg-image { max-width: 320px; border-radius: 10px; display:block; }
+      .msg-video { max-width: 360px; border-radius: 10px; display:block; }
+      .resizer { position: absolute; top:0; right:-3px; width: 6px; height: 100%; cursor: col-resize; z-index: 3; }
+      .resizer::after { content:''; position:absolute; top:0; bottom:0; left:2px; width:2px; background: transparent; }
+      .resizer:hover::after { background: rgba(99,102,241,0.4); }
+      /* prettier scrollbars */
+      .chat-list::-webkit-scrollbar, .messages::-webkit-scrollbar { width: 8px; height: 8px; }
+      .chat-list::-webkit-scrollbar-thumb, .messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 8px; }
+      .chat-list::-webkit-scrollbar-thumb:hover, .messages::-webkit-scrollbar-thumb:hover { background: #9aa1b3; }
+      .scroll-down { position: fixed; right: 24px; bottom: 92px; z-index: 5; width: 40px; height: 40px; border-radius: 999px; border:1px solid var(--border); background: var(--card); color: var(--text); display:flex; align-items:center; justify-content:center; cursor:pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.08); opacity:0; pointer-events:none; transition: opacity .15s ease, transform .15s ease; }
+      .scroll-down[data-visible="1"] { opacity:1; pointer-events:auto; transform: translateY(0); }
+      .panel { position:absolute; right: 16px; bottom: 70px; width: 320px; max-height: 300px; overflow:auto; background: var(--card); border:1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); display:none; padding:10px; }
+      .panel h4 { margin: 0 0 8px 0; font-size:13px; color: var(--muted); font-weight:600; }
+      .tpl-item { padding:8px 10px; border:1px solid var(--border); border-radius:8px; margin-bottom:8px; cursor:pointer; background: var(--bg); }
+      .tpl-item:hover { background: rgba(0,0,0,0.03); }
+    </style>
+  </head>
+  <body>
+    <script src="/public/nav.js"></script>
+    <script src="/public/theme-init.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+    <div class="layout">
+      <div class="sidebar">
+        <div class="topbar">
+          <select id="session" class="session-select"></select>
+          <input id="search" class="search" placeholder="Search..." />
+        </div>
+        <div id="chatList" class="chat-list"></div>
+        <div class="resizer" id="sidebarResizer"></div>
+      </div>
+      <div class="content">
+        <div id="chatHeader" class="header"><div id="chatTitle" style="font-weight:600;">Select a chat</div><div id="chatSub" style="margin-left:auto; font-size:12px; color:var(--muted);"></div><div class="header-actions"><button id="refreshChats" class="btn-ghost" title="Refresh chats">↻ Refresh</button><button id="reconnectBtn" class="btn-ghost" title="Reconnect session">🔄 Reconnect</button></div></div>
+        <div id="messages" class="messages"></div>
+        <button id="scrollDown" class="scroll-down" title="Scroll to latest">⬇</button>
+        <div class="composer">
+          <textarea id="input" placeholder="Type a message..."></textarea>
+          <div style="display:flex; gap:8px; align-items:flex-end;">
+            <label for="mediaFile" class="icon-circle">📎</label>
+            <input id="mediaFile" type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx" style="display:none;" />
+            <button id="micBtn" type="button" class="icon-circle" title="Record audio">🎤</button>
+            <button id="tplBtn" type="button" class="icon-circle" title="Templates">📄</button>
+            <button id="send" class="send-btn">Send</button>
+          </div>
+        </div>
+        <div id="tplPanel" class="panel">
+          <h4>Templates</h4>
+          <div id="tplList"></div>
+          <div style="display:flex; gap:6px; margin-top:8px;">
+            <input id="tplName" placeholder="Template name" class="search" style="height:34px; flex:1;" />
+            <button id="tplSave" class="btn-ghost">Save current</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      let socket = null;
+      let currentSession = null;
+      let chats = [];
+      let activeChatId = null;
+      let searchQuery = '';
+      let listInterval = null;
+      let chatInterval = null;
+      const chatLimits = {}; // chatId -> number of messages to load (incremental)
+      let loadingOlder = false;
+      const messageIdToBubble = new Map();
+      const pendingOutgoing = new Map();
+
+      document.addEventListener('DOMContentLoaded', init);
+
+      async function init(){
+        await loadSessions();
+        ensureSocket();
+        document.getElementById('session').addEventListener('change', onSessionChange);
+        document.getElementById('search').addEventListener('input', (e)=>{ searchQuery=e.target.value.toLowerCase(); renderChatList(); });
+        document.getElementById('send').addEventListener('click', sendMessage);
+        document.getElementById('input').addEventListener('keydown', (e)=>{ if((e.key==='Enter'&&!e.shiftKey) || (e.key==='Enter'&&(e.metaKey||e.ctrlKey))){ e.preventDefault(); sendMessage(); } });
+        document.getElementById('input').addEventListener('input', updateSendEnabled);
+        document.getElementById('mediaFile').addEventListener('change', updateSendEnabled);
+        const mic = document.getElementById('micBtn'); if (mic) mic.addEventListener('click', toggleRecording);
+        document.getElementById('refreshChats').addEventListener('click', loadChats);
+        document.getElementById('reconnectBtn').addEventListener('click', manualReconnect);
+        document.getElementById('tplBtn').addEventListener('click', toggleTemplatesPanel);
+        document.getElementById('tplSave').addEventListener('click', saveTemplate);
+        const msgPane = document.getElementById('messages');
+        const scrollBtn = document.getElementById('scrollDown');
+        if (msgPane && scrollBtn) {
+          msgPane.addEventListener('scroll', ()=>{
+            const nearBottom = (msgPane.scrollHeight - msgPane.scrollTop - msgPane.clientHeight) < 160;
+            scrollBtn.setAttribute('data-visible', nearBottom ? '0' : '1');
+          });
+          scrollBtn.addEventListener('click', ()=> { msgPane.scrollTop = msgPane.scrollHeight; scrollBtn.setAttribute('data-visible','0'); });
+        }
+      setupSidebarResize();
+      await fetchTemplates();
+      showEmpty('Select a chat to start messaging');
+      }
+
+      async function loadSessions(){
+        const res = await fetch('/api/queue/stats');
+        const data = await res.json();
+        const sel = document.getElementById('session');
+        sel.innerHTML = '<option value="">Select Session...</option>';
+        (data.sessions||[]).filter(s=>s.ready).forEach(s=>{ const o=document.createElement('option'); o.value=s.id; o.textContent=s.id; sel.appendChild(o); });
+      }
+
+      function ensureSocket(){
+        if (socket) return socket;
+        socket = io('/', { transports:['websocket'], upgrade:false });
+        socket.on('connect', ()=>{ if(currentSession){ socket.emit('join_session', { sessionId: currentSession }); }});
+        socket.on('chat_message', onChatMessage);
+        socket.on('message_ack', onMessageAck);
+        socket.on('typing', onTyping);
+        return socket;
+      }
+
+      async function onSessionChange(){
+        currentSession = document.getElementById('session').value;
+        activeChatId = null;
+        document.getElementById('messages').innerHTML='';
+        const hTitle = document.getElementById('chatTitle'); if (hTitle) hTitle.textContent = 'Select a chat';
+        const hSub = document.getElementById('chatSub'); if (hSub) hSub.textContent = '';
+        if (!currentSession) return;
+        ensureSocket(); socket.emit('join_session', { sessionId: currentSession });
+        await loadChats();
+        startListAutoRefresh();
+      }
+
+      async function loadChats(){
+        const res = await fetch(`/api/chats/${currentSession}?limit=200&offset=0&timeout=60000`);
+        if (res.status === 503) {
+          const info = await res.json().catch(()=>({}));
+          const sub = document.getElementById('chatSub');
+          if (sub) sub.textContent = 'Reconnecting WhatsApp…';
+          return; // let auto-refresh try again shortly
+        }
+        const data = await res.json();
+        chats = (data.chats||data||[]).map(c=>({
+          id: c.id?._serialized || c.id,
+          name: c.contact?.name || c.name || c.contact?.formattedName || c.id?.user || 'Unknown',
+          unread: c.unreadCount || 0,
+          isGroup: !!c.isGroup,
+          timestamp: c.lastTimestamp || c.timestamp || 0,
+          lastText: c.lastText || ''
+        }));
+        renderChatList();
+      }
+
+      function renderChatList(){
+        const list = document.getElementById('chatList');
+        list.innerHTML='';
+        const filtered = chats.filter(c=>{
+          if (!searchQuery) return true;
+          const key = `${c.name} ${c.id}`.toLowerCase();
+          return key.includes(searchQuery);
+        }).sort((a,b)=> {
+          const bu = (b.unread||0) - (a.unread||0);
+          if (bu !== 0) return bu;
+          return (b.timestamp||0) - (a.timestamp||0);
+        });
+        filtered.forEach(c=>{
+          const div = document.createElement('div');
+          div.className='chat-item' + (activeChatId===c.id ? ' active' : '');
+          div.onclick=()=> openChat(c.id, c.name);
+          const av = document.createElement('div'); av.className='avatar';
+          if (c.profilePicUrl) {
+            av.style.background = 'none';
+            av.style.boxShadow = 'inset 0 0 0 1px rgba(0,0,0,0.06)';
+            av.innerHTML = `<img src="${c.profilePicUrl}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"/>`;
+          } else {
+            av.textContent=(c.name||'?').charAt(0).toUpperCase();
+          }
+          const meta = document.createElement('div'); meta.className='meta';
+          const time = c.timestamp ? new Date(c.timestamp*1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+          const last = (c.lastText||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+          meta.innerHTML = `<div class="name-row"><span class="name">${c.name}</span><span class="time">${time}</span></div><div class="last">${last || c.id}</div>`;
+          const unread = document.createElement('div'); unread.className='unread'; unread.style.display = c.unread? 'inline-block':'none'; unread.textContent = c.unread;
+          div.appendChild(av); div.appendChild(meta); div.appendChild(unread); list.appendChild(div);
+        });
+      }
+
+      async function openChat(chatId, name){
+        activeChatId = chatId;
+        const title = document.getElementById('chatTitle'); const sub = document.getElementById('chatSub');
+        if (title) title.textContent = name;
+        if (sub) sub.textContent = chatId;
+        chatLimits[chatId] = 10; // start with last 10 messages
+        await loadMessages(chatId);
+        // reset unread locally
+        const c = chats.find(x=> (x.id===chatId)); if (c){ c.unread = 0; renderChatList(); }
+        startChatAutoRefresh();
+      }
+
+      async function loadMessages(chatId, { preserveScroll=false } = {}){
+        const limit = Math.max(10, chatLimits[chatId] || 10);
+        const pane = document.getElementById('messages');
+        const prevScrollHeight = pane.scrollHeight;
+        const prevScrollTop = pane.scrollTop;
+        const res = await fetch(`/api/messages/${currentSession}/${encodeURIComponent(chatId)}?limit=${limit}`);
+        const data = await res.json();
+        const msgs = (data.messages||[]).slice().sort((a,b)=> (a.timestamp||0)-(b.timestamp||0));
+        pane.innerHTML='';
+        // Load older sentinel/button
+        const older = document.createElement('div');
+        older.style.cssText = 'text-align:center; color: var(--muted); font-size:12px; padding:6px 0; cursor:pointer;';
+        older.textContent = 'Load earlier messages';
+        older.onclick = async ()=>{ if (loadingOlder) return; loadingOlder = true; chatLimits[chatId] = (chatLimits[chatId]||10) + 20; await loadMessages(chatId, { preserveScroll:true }); loadingOlder = false; };
+        pane.appendChild(older);
+        if (!msgs.length) {
+          const empty = document.createElement('div'); empty.className='empty-state'; empty.textContent = 'No messages yet. Say hello!'; pane.appendChild(empty);
+        }
+        msgs.forEach(m=> appendBubble(m.body||'', !!m.fromMe, { timestamp: m.timestamp, id: m.id, chatId }));
+        // update preview and timestamp
+        try {
+          const last = msgs[msgs.length-1];
+          const c = chats.find(x=>x.id===chatId);
+          if (c && last){ c.lastText = last.body || ''; c.timestamp = last.timestamp || c.timestamp; renderChatList(); }
+        } catch {}
+        if (preserveScroll) {
+          const newScrollHeight = pane.scrollHeight;
+          pane.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
+        } else {
+          pane.scrollTop = pane.scrollHeight;
+        }
+        // lazy-load older when user scrolls to top
+        pane.onscroll = async ()=>{
+          if (pane.scrollTop < 60 && !loadingOlder) {
+            loadingOlder = true; chatLimits[chatId] = (chatLimits[chatId]||10) + 20; await loadMessages(chatId, { preserveScroll:true }); loadingOlder = false;
+          }
+        };
+      }
+
+      function appendBubble(text, fromMe, opts={}){
+        const pane = document.getElementById('messages');
+        const nearBottom = (pane.scrollHeight - pane.scrollTop - pane.clientHeight) < 120;
+        const wrap = document.createElement('div'); wrap.className = `bubble ${fromMe? 'me':'them'}`;
+        const inner = document.createElement('div'); inner.className='inner';
+        try { inner.dir = isRTL(text) ? 'rtl' : 'auto'; } catch {}
+        if (opts.type === 'audio' && opts.src) {
+          inner.innerHTML = `<audio class="msg-audio" controls src="${opts.src}"></audio>${text? `<div style='margin-top:6px'>${escapeHtml(text)}</div>`:''}`;
+        } else if (opts.type === 'image' && opts.src) {
+          inner.innerHTML = `<img class="msg-image" src="${opts.src}" alt="image"/>${text? `<div style='margin-top:6px'>${escapeHtml(text)}</div>`:''}`;
+        } else if (opts.type === 'video' && opts.src) {
+          inner.innerHTML = `<video class="msg-video" controls src="${opts.src}"></video>${text? `<div style='margin-top:6px'>${escapeHtml(text)}</div>`:''}`;
+        } else {
+          inner.innerHTML = (text||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        }
+        // timestamp + ticks container
+        const stamp = document.createElement('div'); stamp.className='stamp';
+        const time = document.createElement('span'); time.textContent = opts.timestamp ? formatTime(opts.timestamp) : '';
+        stamp.appendChild(time);
+        if (fromMe) {
+          const ticks = document.createElement('span'); ticks.className = 'ticks sent'; ticks.innerHTML = svgSingleTick('#9aa1b3');
+          ticks.title = 'Delivery status';
+          ticks.addEventListener('click', (e)=>{
+            e.stopPropagation();
+            const tb = wrap.querySelector('.tooltip');
+            const visible = tb && tb.style.display === 'block';
+            if (!tb) return;
+            tb.style.display = visible ? 'none' : 'block';
+            if (!visible) setTimeout(()=>{ try { tb.style.display = 'none'; } catch {} }, 2000);
+          });
+          stamp.appendChild(ticks);
+          const tip = document.createElement('div'); tip.className='tooltip'; tip.textContent = 'Sent';
+          inner.appendChild(tip);
+        }
+        inner.appendChild(stamp);
+        wrap.appendChild(inner); pane.appendChild(wrap);
+        try {
+          const chatIdForBubble = opts.chatId || activeChatId;
+          if (opts.id) {
+            wrap.dataset.msgId = String(opts.id);
+            messageIdToBubble.set(String(opts.id), wrap);
+          } else if (fromMe) {
+            const tempId = opts.tempId || ('tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
+            wrap.dataset.tempId = tempId;
+            const arr = pendingOutgoing.get(chatIdForBubble) || [];
+            arr.push(wrap);
+            pendingOutgoing.set(chatIdForBubble, arr);
+          }
+        } catch {}
+        if (nearBottom) pane.scrollTop = pane.scrollHeight;
+      }
+
+      function escapeHtml(s){ return String(s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+      function isRTL(s){ return /[\u0591-\u08FF]/.test(String(s||'')); }
+      function formatTime(ts){ try { const d = (String(ts).length > 10) ? new Date(Number(ts)) : new Date(Number(ts)*1000); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); } catch { return ''; } }
+      function svgSingleTick(color){ return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+      function svgDoubleTick(color){ return `<svg width="18" height="16" viewBox="0 0 28 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M26 6L15 17l-5-5" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 6l-9 9-3-3" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+      function setBubbleAck(bubble, ack){
+        try {
+          const ticks = bubble.querySelector('.ticks');
+          const tip = bubble.querySelector('.tooltip');
+          if (!ticks) return;
+          if (ack >= 3) {
+            ticks.innerHTML = svgDoubleTick('#34B7F1');
+            ticks.className = 'ticks read';
+            if (tip) tip.textContent = 'Read';
+          } else if (ack >= 2) {
+            ticks.innerHTML = svgDoubleTick('#6b7280');
+            ticks.className = 'ticks delivered';
+            if (tip) tip.textContent = 'Delivered';
+          } else if (ack >= 1) {
+            ticks.innerHTML = svgSingleTick('#9aa1b3');
+            ticks.className = 'ticks sent';
+            if (tip) tip.textContent = 'Sent';
+          } else {
+            ticks.innerHTML = svgSingleTick('#9aa1b3');
+            ticks.className = 'ticks sent';
+            if (tip) tip.textContent = 'Pending';
+          }
+        } catch {}
+      }
+
+      function onChatMessage(payload){
+        if (!payload || payload.sessionId !== currentSession) return;
+        const chatId = payload.chatId; const m = payload.message||{};
+        // update preview + timestamp
+        try {
+          const c = chats.find(x=> (x.id===chatId));
+          if (c){ c.lastText = m.body || c.lastText; c.timestamp = m.timestamp || c.timestamp; }
+        } catch {}
+        // Update unread for non-active chats
+        if (activeChatId !== chatId && !m.fromMe){ const c = chats.find(x=> (x.id===chatId)); if (c){ c.unread = (c.unread||0)+1; } }
+        // Append to active chat
+        if (activeChatId === chatId){
+          appendBubble(m.body||'', !!m.fromMe, { timestamp: m.timestamp, id: m.id, chatId });
+          if (m.fromMe && m.id) {
+            try {
+              const arr = pendingOutgoing.get(chatId) || [];
+              if (arr.length) {
+                const b = arr.shift();
+                pendingOutgoing.set(chatId, arr);
+                b.dataset.msgId = String(m.id);
+                delete b.dataset.tempId;
+                messageIdToBubble.set(String(m.id), b);
+                setBubbleAck(b, 1);
+              }
+            } catch {}
+          }
+        }
+        // Move chat to top by resorting
+        renderChatList();
+      }
+
+      // Track outgoing acknowledgements and update small status in header
+      function onMessageAck(payload){
+        if (!payload || payload.sessionId !== currentSession) return;
+        if (payload.chatId !== activeChatId) return;
+        // Update ticks on the last outgoing bubble if present
+        try {
+          const pane = document.getElementById('messages');
+          const bubbles = Array.from(pane.querySelectorAll('.bubble.me .inner .ticks'));
+          const last = bubbles[bubbles.length - 1];
+          if (last) {
+            last.textContent = payload.ack >= 3 ? '✓✓' : (payload.ack >= 1 ? '✓' : '○');
+            last.classList.remove('sent','delivered','read');
+            if (payload.ack >= 3) last.classList.add('read');
+            else if (payload.ack >= 2) last.classList.add('delivered');
+            else last.classList.add('sent');
+          }
+        } catch {}
+      }
+
+      // Typing indicator show/hide
+      let typingTimeout = null;
+      function onTyping(payload){
+        if (!payload || payload.sessionId !== currentSession) return;
+        if (payload.chatId !== activeChatId) return;
+        const sub = document.getElementById('chatSub');
+        if (payload.typing) {
+          if (sub) sub.textContent = `${activeChatId} • typing…`;
+          if (typingTimeout) clearTimeout(typingTimeout);
+          typingTimeout = setTimeout(()=>{ const s = document.getElementById('chatSub'); if (s) s.textContent = activeChatId || ''; }, 2500);
+        } else {
+          if (sub) sub.textContent = activeChatId || '';
+        }
+      }
+
+      async function sendMessage(){
+        if (!currentSession || !activeChatId) return;
+        const input = document.getElementById('input');
+        const text = (input.value||'').trim(); if (!text && !(document.getElementById('mediaFile')?.files?.length)) return;
+        input.value='';
+        const fileInput = document.getElementById('mediaFile');
+        const file = fileInput?.files?.[0] || null;
+        const nowTs = Math.floor(Date.now()/1000);
+        const tempId = 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+        if (file) {
+          try {
+            const form = new FormData();
+            form.append('file', file);
+            const up = await fetch('/api/upload', { method:'POST', body: form });
+            const data = await up.json();
+            if (up.ok && data.filename) {
+              const url = data.url || `/uploads/${data.filename}`;
+              const isImage = file.type.startsWith('image/');
+              const isVideo = file.type.startsWith('video/');
+              const isAudio = file.type.startsWith('audio/');
+              if (isImage) appendBubble(text, true, { type: 'image', src: url, timestamp: nowTs, tempId, chatId: activeChatId });
+              else if (isVideo) appendBubble(text, true, { type: 'video', src: url, timestamp: nowTs, tempId, chatId: activeChatId });
+              else if (isAudio) appendBubble(text, true, { type: 'audio', src: url, timestamp: nowTs, tempId, chatId: activeChatId });
+              else appendBubble(text || `[file: ${file.name}]`, true, { timestamp: nowTs, tempId, chatId: activeChatId });
+              await fetch('/api/send-message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: currentSession, phone: activeChatId, message: text, mediaPath: data.filename, caption: text }) });
+            }
+          } catch {}
+          fileInput.value = '';
+          updateSendEnabled();
+          return;
+        }
+        // Local optimistic append
+        appendBubble(text, true, { timestamp: nowTs, tempId, chatId: activeChatId });
+        try { await fetch('/api/send-message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: currentSession, phone: activeChatId, message: text }) }); } catch {}
+        updateSendEnabled();
+      }
+
+      // Simple voice recorder -> uploads blob and sends as audio
+      let mediaRecorder = null; let recordedChunks = [];
+      async function toggleRecording(){
+        const btn = document.getElementById('micBtn');
+        try {
+          if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Prefer WhatsApp-friendly OGG/Opus when supported
+            let chosenType = '';
+            if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/ogg; codecs=opus')) {
+              chosenType = 'audio/ogg; codecs=opus';
+            } else if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm; codecs=opus')) {
+              chosenType = 'audio/webm; codecs=opus';
+            } else {
+              chosenType = 'audio/webm';
+            }
+            mediaRecorder = new MediaRecorder(stream, { mimeType: chosenType });
+            recordedChunks = [];
+            mediaRecorder.ondataavailable = (e)=>{ if (e.data && e.data.size) recordedChunks.push(e.data); };
+            mediaRecorder.onstop = async ()=>{
+              const useOgg = (mediaRecorder.mimeType || '').includes('ogg');
+              const mime = useOgg ? 'audio/ogg' : 'audio/webm';
+              const ext = useOgg ? 'ogg' : 'webm';
+              const blob = new Blob(recordedChunks, { type: mime });
+              const file = new File([blob], `voice_note.${ext}`, { type: mime });
+              const form = new FormData(); form.append('file', file);
+              try {
+                const up = await fetch('/api/upload', { method:'POST', body: form });
+                const data = await up.json();
+                if (up.ok && data.filename) {
+                  const now = Math.floor(Date.now()/1000);
+                  const tmp = 'tmp_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+                  appendBubble('', true, { type: 'audio', src: data.url || `/uploads/${data.filename}`, timestamp: now, tempId: tmp, chatId: activeChatId });
+                  await fetch('/api/send-message', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId: currentSession, phone: activeChatId, message: '', mediaPath: data.filename }) });
+                }
+              } catch {}
+              if (btn) btn.classList.remove('active');
+            };
+            mediaRecorder.start(); if (btn) btn.classList.add('active');
+          } else if (mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+          }
+        } catch (e) {
+          if (btn) btn.classList.remove('active');
+        }
+      }
+
+      // Auto refresh helpers (polling as a fallback to sockets)
+      function startListAutoRefresh(){
+        if (listInterval) clearInterval(listInterval);
+        listInterval = setInterval(async ()=>{
+          try { if (currentSession) await loadChats(); } catch {}
+        }, 10000);
+      }
+      function startChatAutoRefresh(){
+        if (chatInterval) clearInterval(chatInterval);
+        chatInterval = setInterval(async ()=>{
+          try { if (currentSession && activeChatId) await loadMessages(activeChatId); } catch {}
+        }, 7000);
+      }
+      
+      // Sidebar resizer
+      function setupSidebarResize(){
+        const resizer = document.getElementById('sidebarResizer');
+        const root = document.documentElement;
+        let dragging = false; let startX = 0; let startWidth = 0;
+        const minW = 260; const maxW = 640;
+        const onMove = (e)=>{
+          if (!dragging) return;
+          const x = e.touches ? e.touches[0].clientX : e.clientX;
+          const delta = x - startX;
+          let newW = Math.min(maxW, Math.max(minW, startWidth + delta));
+          root.style.setProperty('--sidebarWidth', newW + 'px');
+        };
+        const onUp = ()=>{ dragging = false; document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); document.removeEventListener('touchmove', onMove); document.removeEventListener('touchend', onUp); };
+        if (resizer) {
+          resizer.addEventListener('mousedown', (e)=>{ dragging = true; startX = e.clientX; const gcs = getComputedStyle(document.querySelector('.sidebar')); startWidth = parseInt(gcs.width,10) || 380; document.addEventListener('mousemove', onMove); document.addEventListener('mouseup', onUp); });
+          resizer.addEventListener('touchstart', (e)=>{ dragging = true; startX = e.touches[0].clientX; const gcs = getComputedStyle(document.querySelector('.sidebar')); startWidth = parseInt(gcs.width,10) || 380; document.addEventListener('touchmove', onMove, { passive:false }); document.addEventListener('touchend', onUp); });
+        }
+      }
+      // Enable/disable Send button based on input/file
+      function updateSendEnabled(){
+        const btn = document.getElementById('send');
+        const input = document.getElementById('input');
+        const fileInput = document.getElementById('mediaFile');
+        const hasText = !!(input && input.value && input.value.trim().length);
+        const hasFile = !!(fileInput && fileInput.files && fileInput.files.length);
+        if (btn) btn.disabled = !(hasText || hasFile);
+      }
+    </script>
+  </body>
+</html>

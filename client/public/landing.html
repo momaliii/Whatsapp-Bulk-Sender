@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>واتس تول | منصة ذكية لتسويق ومحادثات واتساب</title>
+    <meta name="description" content="حوّل واتساب إلى قناة مبيعات ذكية. إرسال جماعي، ردود تلقائية، وكيل ذكاء اصطناعي، وتحليلات نمو — مصممة لسوق الخليج." />
+    <meta name="theme-color" content="#ffffff" />
+    <meta property="og:title" content="واتس تول | منصة ذكية لتسويق ومحادثات واتساب" />
+    <meta property="og:description" content="إرسال جماعي، قوالب معتمدة، تدفقات محادثة، ووكيل ذكاء اصطناعي — جرّب مجانًا" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="ar" />
+    <style>
+      :root{
+        --bg:#f7f8fc;--card:#ffffff;--text:#0f172a;--muted:#64748b;--primary:#2563eb;--primary-700:#1d4ed8;--accent:#22c55e;--border:#e2e8f0;--soft:#f1f5f9;
+        --radius:16px;--gradA:#2563eb;--gradB:#22c55e;--shadow-1:0 10px 30px rgba(2,6,23,.06);--shadow-2:0 18px 46px rgba(37,99,235,.12)
+      }
+      *{box-sizing:border-box}
+      html{scroll-behavior:smooth;overflow-x:hidden}
+      body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;min-height:100dvh;overflow-x:hidden;background:
+        radial-gradient(900px 500px at 110% -10%, #e0f2fe 0%, rgba(224,242,254,0) 60%),
+        radial-gradient(700px 400px at -10% -10%, #eef2ff 0%, rgba(238,242,255,0) 60%),
+        var(--bg);color:var(--text)}
+      body::after{content:"";position:fixed;inset:0;pointer-events:none;background:
+        repeating-linear-gradient(90deg,rgba(2,6,23,.02) 0 1px,transparent 1px 20px),
+        repeating-linear-gradient(0deg,rgba(2,6,23,.02) 0 1px,transparent 1px 20px);
+        mask: radial-gradient(70% 60% at 50% 0%, rgba(0,0,0,.15), transparent 60%)}
+      a{color:inherit;text-decoration:none}
+      .container{max-width:1120px;margin:0 auto;padding:0 20px}
+      header{position:sticky;top:0;background:rgba(255,255,255,.85);backdrop-filter:blur(12px);border-bottom:1px solid rgba(226,232,240,.6);z-index:50}
+      .nav{display:flex;align-items:center;justify-content:space-between;height:64px}
+      .brand{font-weight:900;letter-spacing:.3px}
+      .brand .dot{background:linear-gradient(90deg,var(--gradA),var(--gradB));-webkit-background-clip:text;background-clip:text;color:transparent}
+      .nav a.btn{padding:10px 16px;border-radius:12px;background:var(--primary);color:#fff;font-weight:800;border:1px solid var(--primary);box-shadow:0 8px 18px rgba(37,99,235,.18)}
+      .hero{padding:92px 0 48px;position:relative}
+      .hero::before{content:"";position:absolute;inset:auto -10% 0 -10%;height:40%;background:radial-gradient(60% 60% at 50% 0%, rgba(37,99,235,.08), transparent 70%);pointer-events:none}
+      .hero .wrap{display:grid;grid-template-columns:1.2fr .8fr;gap:28px;align-items:center}
+      .hero .wrap > div:first-child{max-width:640px}
+      .kicker{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;font-weight:700;font-size:12px}
+      h1{margin:14px 0 10px;font-size:44px;line-height:1.15}
+      h1 .grad{background:linear-gradient(90deg,#2563eb,#22c55e);-webkit-background-clip:text;background-clip:text;color:transparent}
+      .sub{color:var(--muted);font-size:18px}
+      .cta{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+      .btn{appearance:none;cursor:pointer;border:1px solid var(--border);background:#0ea5e9;color:white;padding:12px 18px;border-radius:12px;font-weight:800;transition:transform .15s ease, box-shadow .2s ease, background .3s ease}
+      .btn:focus-visible{outline:3px solid rgba(37,99,235,.3);outline-offset:2px}
+      .btn.primary{background:linear-gradient(135deg,var(--gradA),#1d4ed8);border-color:rgba(37,99,235,.6);box-shadow:0 10px 26px rgba(37,99,235,.28)}
+      .btn.primary:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(37,99,235,.34)}
+      .btn.ghost{background:#fff;color:#0f172a;border-color:#cbd5e1}
+      .btn.ghost:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(2,6,23,.08)}
+      .meta{display:flex;gap:18px;margin-top:10px;color:var(--muted);font-size:13px}
+      .card{background:rgba(255,255,255,.9);border:1px solid rgba(226,232,240,.7);border-radius:var(--radius);box-shadow:var(--shadow-1);overflow:hidden;transition:transform .2s ease, box-shadow .25s ease, border-color .25s ease}
+      .card:hover{transform:translateY(-3px);box-shadow:0 16px 40px rgba(2,6,23,.12);border-color:#cfe0ff}
+      .demo{padding:18px}
+      .demo .bar{display:flex;gap:6px;padding:10px;border-bottom:1px solid var(--border);background:linear-gradient(90deg,#f8fafc,#ffffff)}
+      .dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+      .dot.r{background:#ef4444}.dot.y{background:#f59e0b}.dot.g{background:#22c55e}
+      .demo-body{padding:16px;display:grid;grid-template-columns:1fr;gap:10px}
+      .bubble{display:inline-block;background:#e7f7ef;border:1px solid #bbf7d0;color:#065f46;padding:10px 12px;border-radius:12px;max-width:100%}
+      .sec{padding:48px 0}
+      .sec h2{font-size:28px;margin:0 0 8px;position:relative}
+      .sec h2::after{content:"";display:block;width:76px;height:4px;border-radius:999px;background:linear-gradient(90deg,var(--gradA),var(--gradB));margin-top:10px}
+      .muted{color:var(--muted)}
+      main{flex:1}
+      .grid{display:grid;gap:16px}
+      .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+      .grid.cols-4{grid-template-columns:repeat(4,1fr)}
+      .feat{padding:18px;background:linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, rgba(37,99,235,.18), rgba(34,197,94,.18)) border-box;border:1px solid transparent}
+      .feat h3{margin:10px 0 6px}
+      .badge{display:inline-block;padding:6px 10px;border-radius:999px;background:#ecfeff;border:1px solid #bae6fd;color:#075985;font-weight:700;font-size:12px}
+      .stats{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px}
+      .stat{background:var(--soft);border:1px solid var(--border);border-radius:12px;padding:12px 14px;min-width:150px}
+      .stat .num{font-weight:900;font-size:22px;color:#111827}
+      .pricing-toggle{display:flex;gap:8px;align-items:center;margin:12px 0}
+      .switch{position:relative;width:56px;height:28px;background:#e2e8f0;border-radius:999px;cursor:pointer}
+      .switch .knob{position:absolute;top:3px;right:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:.25s}
+      .switch.active{background:#c7d2fe}
+      .switch.active .knob{right:31px}
+      .plan{padding:18px;display:flex;flex-direction:column;gap:10px;position:relative}
+      .plan.featured{background:linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, rgba(37,99,235,.45), rgba(34,197,94,.35)) border-box;border:1px solid transparent;box-shadow:var(--shadow-2)}
+      .price{font-size:32px;font-weight:900}
+      .price small{font-size:12px;color:var(--muted)}
+      .price [data-price-m]{background:linear-gradient(90deg,var(--gradA),var(--gradB));-webkit-background-clip:text;background-clip:text;color:transparent}
+      ul.list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+      ul.list li{display:flex;gap:10px;align-items:flex-start}
+      .check{color:#16a34a}
+      .ok,.bad,.mid{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:12px;line-height:1;border:1px solid}
+      .ok{background:#ecfdf5;border-color:#86efac;color:#16a34a}
+      .bad{background:#fef2f2;border-color:#fecaca;color:#ef4444}
+      .mid{background:#fffbeb;border-color:#fde68a;color:#f59e0b}
+      .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:10px;background:#f1f5f9;color:#0f172a;border:1px solid var(--border);font-weight:700;font-size:12px}
+      .pill:hover{background:#eef2ff;border-color:#c7d2fe}
+      .testi{display:flex;gap:12px;overflow:auto;padding-bottom:6px;scroll-snap-type:x mandatory}
+      .testi .t{min-width:280px;scroll-snap-align:start;padding:16px;border:1px solid var(--border);border-radius:14px;background:#fff}
+      .testi::-webkit-scrollbar{height:8px}
+      .testi::-webkit-scrollbar-thumb{background:#e2e8f0;border-radius:999px}
+      .faq .q{padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer}
+      .faq .a{display:none;padding:10px 16px;color:var(--muted)}
+      .cta-bar{position:sticky;bottom:12px;margin:20px auto;max-width:800px;background:rgba(255,255,255,.95);border:1px solid var(--border);border-radius:16px;box-shadow:0 12px 30px rgba(2,6,23,.12);display:flex;align-items:center;justify-content:space-between;padding:14px 16px;gap:12px}
+      @media (min-width: 1440px){ .container{max-width:1200px} h1{font-size:48px} }
+      footer{display:none}
+      /* Cases */
+      .cases{grid-template-columns:repeat(3,1fr)}
+      .case{padding:18px;display:flex;flex-direction:column;gap:12px}
+      .case-logo{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#fff;font-weight:800;color:#0f172a;width:max-content}
+      .kpis{display:flex;gap:10px;flex-wrap:wrap}
+      .kpi{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:10px 12px}
+      .kpi .num{font-size:20px;font-weight:900;color:#0f172a}
+      /* Trust strip */
+      .trust{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:14px}
+      .trust .rate{display:flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:#fff}
+      .stars{color:#f59e0b}
+      .logos{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+      .logo{padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:#fff;font-weight:700;color:#0f172a}
+      /* Active pill */
+      .pill.active{border-color:#2563eb;background:#eef2ff;color:#1e40af}
+      /* Sticky WhatsApp CTA */
+      .float-wa{position:fixed;bottom:20px;left:20px;z-index:60;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#22c55e;color:#fff;font-size:26px;box-shadow:0 10px 20px rgba(16,185,129,.35);border:1px solid rgba(16,185,129,.6);animation:float 3.2s ease-in-out infinite}
+      @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+      .float-wa:hover{filter:brightness(1.05)}
+      /* Back to top */
+      .float-top{position:fixed;bottom:88px;left:22px;z-index:50;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a;box-shadow:0 8px 18px rgba(2,6,23,.12)}
+      .float-top:hover{box-shadow:0 12px 26px rgba(2,6,23,.16)}
+      /* Chatbot */
+      .bot-btn{position:fixed;bottom:20px;right:20px;z-index:60;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;border:1px solid rgba(37,99,235,.6);box-shadow:0 10px 24px rgba(37,99,235,.35)}
+      .bot-panel{position:fixed;bottom:86px;right:20px;width:340px;max-width:90vw;height:460px;display:none;flex-direction:column;background:#fff;border:1px solid #e2e8f0;border-radius:16px;box-shadow:0 14px 40px rgba(2,6,23,.24);overflow:hidden}
+      .bot-panel.open{display:flex}
+      .bot-head{padding:10px 12px;background:linear-gradient(90deg,#2563eb,#22c55e);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:space-between}
+      .bot-body{padding:10px;display:flex;flex-direction:column;gap:8px;background:#f8fafc;flex:1;overflow:auto}
+      .bot-msg{max-width:86%;padding:8px 10px;border-radius:12px;border:1px solid #e2e8f0;background:#fff}
+      .bot-msg.me{align-self:flex-end;background:#2563eb;color:#fff;border-color:#1d4ed8}
+      .bot-footer{display:flex;gap:6px;padding:8px;background:#fff;border-top:1px solid #e2e8f0}
+      .bot-footer input{flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:10px}
+      .bot-suggest{display:flex;gap:6px;flex-wrap:wrap}
+      .bot-chip{padding:6px 10px;border:1px solid #cbd5e1;border-radius:999px;background:#fff;cursor:pointer;font-size:12px}
+      /* Bot attention nudge */
+      .bot-btn.pulse{animation:botPulse 1.8s ease-out infinite}
+      @keyframes botPulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.45)}70%{box-shadow:0 0 0 16px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+      .bot-nudge{position:fixed;bottom:84px;right:20px;z-index:60;background:#fff;border:1px solid #e2e8f0;border-radius:999px;padding:8px 12px;box-shadow:0 10px 24px rgba(2,6,23,.12);font-weight:800;display:none}
+      .bot-nudge.show{display:block;animation:nudgeIn .25s ease}
+      @keyframes nudgeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+      .bot-nudge::after{content:'';position:absolute;bottom:-8px;right:16px;border-width:8px 8px 0 8px;border-style:solid;border-color:#e2e8f0 transparent transparent transparent}
+      .bot-nudge::before{content:'';position:absolute;bottom:-7px;right:17px;border-width:7px 7px 0 7px;border-style:solid;border-color:#ffffff transparent transparent transparent}
+      /* Reveal on scroll */
+      .reveal{opacity:0;transform:translateY(12px);transition:opacity .6s ease, transform .6s ease}
+      .reveal.show{opacity:1;transform:none}
+      /* Comparison */
+      .compare{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px}
+      .compare .col{background:linear-gradient(#fff,#fff) padding-box, linear-gradient(135deg, rgba(203,213,225,.7), rgba(226,232,240,.7)) border-box;border:1px solid transparent;border-radius:14px;padding:14px}
+      .compare h3{margin:0 0 8px}
+      /* ROI */
+      .roi{display:grid;grid-template-columns:1.2fr .8fr;gap:12px}
+      .roi .inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+      .roi .out{background:linear-gradient(#ffffff,#ffffff) padding-box, linear-gradient(135deg, rgba(37,99,235,.25), rgba(34,197,94,.18)) border-box;border:1px solid transparent;border-radius:14px;padding:16px}
+      .roi label{font-size:12px;font-weight:700;color:var(--muted)}
+      .roi input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:10px}
+      .roi .num{font-size:28px;font-weight:900;background:linear-gradient(90deg,var(--gradA),var(--gradB));-webkit-background-clip:text;background-clip:text;color:transparent}
+      /* Currency */
+      .currency{display:flex;align-items:center;gap:8px;margin:8px 0 12px}
+      .currency select{padding:8px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
+      /* Responsive */
+      @media (max-width: 1200px){.container{padding:0 16px}}
+      @media (max-width: 1024px){.grid.cols-4{grid-template-columns:repeat(2,1fr)} .grid.cols-3{grid-template-columns:repeat(2,1fr)} .hero .wrap{grid-template-columns:1fr}}
+      @media (max-width: 768px){
+        h1{font-size:34px}
+        .nav{height:56px}
+        .stats{gap:10px}
+        .compare{grid-template-columns:1fr}
+        .roi{grid-template-columns:1fr}
+        .roi .inputs{grid-template-columns:1fr}
+        .grid.cols-4{grid-template-columns:1fr}
+        .grid.cols-3{grid-template-columns:1fr}
+        .cta-bar{position:static;margin:16px 0}
+      }
+      @media (max-width: 600px){ }
+      @media (max-width: 420px){
+        .btn{padding:10px 12px}
+        .pill{padding:5px 8px}
+        .price{font-size:28px}
+      }
+    </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "واتس تول",
+      "url": "https://example.com",
+      "logo": "https://example.com/logo.png",
+      "sameAs": []
+    }
+    </script>
+  </head>
+  <body>
+    <header>
+      <div class="container nav">
+        <div class="brand">واتس <span class="dot">تول</span></div>
+        <nav>
+          <a href="#pricing" class="pill">الأسعار</a>
+          <a href="#features" class="pill">المزايا</a>
+          <a href="/public/cases.html" class="pill">قصص النجاح</a>
+          <a href="#faq" class="pill">الأسئلة</a>
+          <a href="#pricing" class="btn primary">ابدأ الآن مجانًا</a>
+          <a href="/" class="btn">دخول اللوحة</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <div class="container wrap">
+          <div>
+            <span class="kicker">مصمم لأسواق الخليج • يدعم العربية بالكامل</span>
+            <h1>
+              نمِ مبيعاتك عبر واتساب مع منصة <span id="rotator" class="grad">ذكية وسهلة</span>
+            </h1>
+            <p class="sub">إرسال جماعي قانوني بقوالب معتمدة، ردود تلقائية ذكية، وكيل محادثة بالذكاء الاصطناعي، وتحليلات فورية — كل ما تحتاجه لتحويل المحادثات إلى صفقات.</p>
+            <div class="cta">
+              <a href="#pricing" class="btn primary">ابدأ الآن مجانًا</a>
+              <a href="/public/agent.html" class="btn ghost">شاهد الذكاء الاصطناعي</a>
+              <span class="muted" style="display:flex;align-items:center;gap:6px">لا بطاقة • إلغاء في أي وقت</span>
+            </div>
+            <div class="meta">
+              <span>لا حاجة لبطاقة عند التجربة</span>
+              <span>دعم سريع عبر واتساب</span>
+              <span>دعم متعدد الحسابات</span>
+            </div>
+            <div class="stats">
+              <div class="stat"><div class="num" data-counter="48000">0</div><div class="muted">رسالة مُرسلة شهريًا</div></div>
+              <div class="stat"><div class="num" data-counter="98">0</div><div class="muted">٪ رضا العملاء</div></div>
+              <div class="stat"><div class="num" data-counter="7">0</div><div class="muted">دقائق للتشغيل</div></div>
+            </div>
+            <div class="trust">
+              <div class="rate"><span class="stars">★★★★★</span> 4.9/5 تقييم المستخدمين</div>
+              <div class="logos">
+                <span class="logo">خليج للتجزئة</span>
+                <span class="logo">عيادات رعاية</span>
+                <span class="logo">أكاديمية الخليج</span>
+              </div>
+            </div>
+          </div>
+          <div class="card demo">
+            <div class="bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+            <div class="demo-body">
+              <div class="bubble">مرحبًا 👋 كيف نساعدك اليوم؟</div>
+              <div class="bubble" style="background:#eef2ff;border-color:#c7d2fe;color:#1e3a8a">أريد عرض الأسعار والباقات المتوفرة</div>
+              <div class="bubble">أرسل لك الرابط الآن ✅
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="case-study" class="sec">
+        <div class="container">
+          <h2>قصة نجاح: متجر إلكتروني خليجي</h2>
+          <p class="muted">كيف ضاعف المتجر معدل التحويل خلال 6 أسابيع باستخدام واتس تول.</p>
+          <div class="grid cases">
+            <div class="card case reveal">
+              <span class="case-logo">GulfStore</span>
+              <p class="muted">تحدّي: آلاف العملاء المحتملين من الإعلانات بدون متابعة فعّالة عبر واتساب.</p>
+              <div class="kpis">
+                <div class="kpi"><div class="muted">معدل الرد</div><div class="num">+58٪</div></div>
+                <div class="kpi"><div class="muted">إيرادات من واتساب</div><div class="num">+72٪</div></div>
+                <div class="kpi"><div class="muted">وقت الفريق</div><div class="num">-60٪</div></div>
+              </div>
+              <ul class="list">
+                <li><span class="ok">✓</span> وكيل ذكاء اصطناعي يجيب الأسئلة المتكررة</li>
+                <li><span class="ok">✓</span> تقسيم العملاء حسب الاهتمام واللغة</li>
+              </ul>
+            </div>
+            <div class="card case reveal">
+              <span class="case-logo">CareClinic</span>
+              <p class="muted">تحدّي: تأكيد المواعيد والمتابعة بعد الزيارة يدويًا وبطء الاستجابة.</p>
+              <div class="kpis">
+                <div class="kpi"><div class="muted">إلغاء المواعيد</div><div class="num">-35٪</div></div>
+                <div class="kpi"><div class="muted">مراجعات إيجابية</div><div class="num">+41٪</div></div>
+                <div class="kpi"><div class="muted">زمن الرد</div><div class="num">-70٪</div></div>
+              </div>
+              <ul class="list">
+                <li><span class="ok">✓</span> تأكيد وتذكير تلقائي للمواعيد</li>
+                <li><span class="ok">✓</span> استبيان رضا بعد الزيارة</li>
+                <li><span class="ok">✓</span> تحويل الأسئلة المعقّدة للطاقم فورًا</li>
+              </ul>
+            </div>
+            <div class="card case reveal">
+              <span class="case-logo">GulfAcademy</span>
+              <p class="muted">تحدّي: تسجيل الدورات يدويًا وتسرّب العملاء أثناء التسجيل.</p>
+              <div class="kpis">
+                <div class="kpi"><div class="muted">إكمال التسجيل</div><div class="num">+33٪</div></div>
+                <div class="kpi"><div class="muted">تكلفة الاكتساب</div><div class="num">-22٪</div></div>
+                <div class="kpi"><div class="muted">الاستفسارات المجابة</div><div class="num">+3×</div></div>
+              </div>
+              <ul class="list">
+                <li><span class="ok">✓</span> تدفق محادثة لتأهيل المتقدمين</li>
+                <li><span class="ok">✓</span> إشعارات تلقائية للدفعات والمواعيد</li>
+                <li><span class="ok">✓</span> تكامل مع جداول البيانات</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="features" class="sec">
+        <div class="container">
+          <h2>كل أدوات واتساب التي تحتاجها — في مكان واحد</h2>
+          <p class="muted">منشأة خصيصًا لفرق المبيعات وخدمة العملاء في الخليج.</p>
+          <div class="grid cols-4">
+            <div class="card feat reveal">
+              <span class="badge">إرسال جماعي</span>
+              <h3>حملات سريعة بقوالب رسمية</h3>
+              <p class="muted">استورد جهات الاتصال، اختر القالب، وتتبع النتائج بدقة.</p>
+              <a href="#pricing" class="btn" style="width:max-content">جرّب الآن</a>
+            </div>
+            <div class="card feat reveal">
+              <span class="badge">وكيل ذكي</span>
+              <h3>ذكاء اصطناعي يتحدث بلهجتك</h3>
+              <p class="muted">أجب العملاء تلقائيًا 24/7 مع ضبط النبرة والخطوات.</p>
+              <a href="#pricing" class="btn" style="width:max-content">ابدأ خلال دقائق</a>
+            </div>
+            <div class="card feat reveal">
+              <span class="badge">تدفقات محادثة</span>
+              <h3>نماذج وأسئلة متعددة الخطوات</h3>
+              <p class="muted">ابنِ الرحلة المثالية لالتقاط البيانات وإغلاق الصفقة.</p>
+              <a href="#pricing" class="btn" style="width:max-content">ابنِ تدفقك</a>
+            </div>
+            <div class="card feat reveal">
+              <span class="badge">تحليلات</span>
+              <h3>لوحة أداء لحظية</h3>
+              <p class="muted">معدلات فتح، نقر، رد، وتوزيع الفريق في لحظة.</p>
+              <a href="#pricing" class="btn" style="width:max-content">اعرف أرقامك</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="compare" class="sec">
+        <div class="container">
+          <h2>لماذا <span class="grad" style="-webkit-background-clip:text;background-clip:text;color:transparent">واتس تول</span> أفضل؟</h2>
+          <p class="muted">قارن بين منصتنا والإرسال اليدوي أو الأدوات العامة.</p>
+          <div class="compare">
+            <div class="col reveal">
+              <h3>واتس تول</h3>
+              <ul class="list">
+                <li><span class="ok">✓</span> قوالب رسمية ومطابقة للسياسات</li>
+                <li><span class="ok">✓</span> وكيل ذكاء اصطناعي بالعربية والخليجية</li>
+                <li><span class="ok">✓</span> تدفقات محادثة ونماذج</li>
+                <li><span class="ok">✓</span> تحليلات لحظية وقياس العائد</li>
+              </ul>
+            </div>
+            <div class="col reveal">
+              <h3>الإرسال اليدوي</h3>
+              <ul class="list">
+                <li><span class="bad">✗</span> بطيء وغير قابل للتوسّع</li>
+                <li><span class="bad">✗</span> صعب القياس والتحليل</li>
+                <li><span class="bad">✗</span> يعتمد على الأفراد</li>
+                <li><span class="bad">✗</span> مخاطر سياسات</li>
+              </ul>
+            </div>
+            <div class="col reveal">
+              <h3>أدوات عامة</h3>
+              <ul class="list">
+                <li><span class="mid">~</span> دعم عربي محدود</li>
+                <li><span class="mid">~</span> تكاملات أقل للسوق المحلي</li>
+                <li><span class="mid">~</span> دعم أبطأ</li>
+                <li><span class="mid">~</span> تكلفة أعلى عادة</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="roi" class="sec">
+        <div class="container">
+          <h2>احسب عائدك من واتس تول</h2>
+          <div class="roi">
+            <div class="card inputs reveal" style="padding:16px">
+              <div class="inputs">
+                <div>
+                  <label>العملاء المحتملون أسبوعيًا</label>
+                  <input id="roiLeads" type="number" min="0" value="200" />
+                </div>
+                <div>
+                  <label>معدل التحويل ٪</label>
+                  <input id="roiConv" type="number" min="0" max="100" value="5" />
+                </div>
+                <div>
+                  <label>متوسط قيمة الطلب</label>
+                  <input id="roiAov" type="number" min="0" value="200" />
+                </div>
+                <div>
+                  <label>هامش الربح ٪</label>
+                  <input id="roiMargin" type="number" min="0" max="100" value="30" />
+                </div>
+              </div>
+            </div>
+            <div class="out reveal">
+              <div class="muted">عائد شهري تقديري</div>
+              <div class="num"><span id="roiRevenue">0</span> <span class="curr-symbol">ر.س</span></div>
+              <div class="muted" style="margin-top:10px">عائد/تكلفة (خطة الأعمال)</div>
+              <div class="num" style="font-size:22px"><span id="roiRatio">0</span> ×</div>
+              <div class="muted" style="margin-top:10px">هذه أرقام تقديرية لمساعدتك على اتخاذ القرار.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pricing" class="sec">
+        <div class="container">
+          <h2>أسعار مرنة تناسب حجم عملك</h2>
+          <div class="muted" style="margin:6px 0 12px">جرّب الآن بلا بطاقة — يمكن الإلغاء في أي وقت.</div>
+          <div class="currency">
+            <span class="muted">العملة</span>
+            <select id="currency">
+              <option value="SAR">ر.س (SAR)</option>
+              <option value="AED">د.إ (AED)</option>
+              <option value="KWD">د.ك (KWD)</option>
+            </select>
+          </div>
+          <div class="pricing-toggle">
+            <span class="muted">شهري</span>
+            <div id="billingSwitch" class="switch"><div class="knob"></div></div>
+            <span class="pill" style="background:#ecfccb;border-color:#bbf7d0">وفّر 20٪ سنويًا</span>
+          </div>
+          <div class="grid cols-3">
+            <div class="card plan reveal">
+              <span class="badge">أساسي</span>
+              <div class="price"><span data-price-m="149">149</span> <span class="curr-symbol">ر.س</span> <small>/ شهر</small></div>
+              <ul class="list">
+                <li><span class="check">✓</span> إرسال حتى 10,000 رسالة</li>
+                <li><span class="check">✓</span> قوالب ورسائل محفوظة</li>
+                <li><span class="check">✓</span> دعم عبر البريد</li>
+              </ul>
+              <a href="/" class="btn primary">جرّب مجانًا</a>
+            </div>
+            <div class="card plan reveal" style="border-color:#60a5fa;box-shadow:0 20px 40px rgba(59,130,246,.15)">
+              <span class="badge" style="background:#dbeafe;border-color:#bfdbfe;color:#1e3a8a">الأكثر طلبًا</span>
+              <div class="price"><span data-price-m="349">349</span> <span class="curr-symbol">ر.س</span> <small>/ شهر</small></div>
+              <ul class="list">
+                <li><span class="check">✓</span> إرسال حتى 50,000 رسالة</li>
+                <li><span class="check">✓</span> وكيل ذكاء اصطناعي + تدفقات</li>
+                <li><span class="check">✓</span> دعم أولوية عبر واتساب</li>
+              </ul>
+              <a href="/" class="btn primary">ابدأ الآن</a>
+            </div>
+            <div class="card plan reveal">
+              <span class="badge">شركات</span>
+              <div class="price">مخصص <small>/ سنوي</small></div>
+              <ul class="list">
+                <li><span class="check">✓</span> حسابات متعددة وفِرق</li>
+                <li><span class="check">✓</span> تكاملات وAPI</li>
+                <li><span class="check">✓</span> مدير نجاح مخصص</li>
+              </ul>
+              <a href="#contact" class="btn">تحدث معنا</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec">
+        <div class="container">
+          <h2>عملاؤنا يقولون</h2>
+          <p class="muted">نتائج حقيقية في قطاعات التجزئة، التعليم، والعيادات.</p>
+          <div id="slider" class="testi">
+            <div class="t reveal">وفّرنا وقت الفريق 60٪ وأغلَقنا صفقات أسرع. الواجهة سهلة جدًا. — متجر إلكتروني</div>
+            <div class="t reveal">الردود التلقائية بلغة العميل رفعت الرضا بشكل ملحوظ. — مركز طبي</div>
+            <div class="t reveal">حملات العروض في العيد حقّقت مبيعات قياسية. — شركة خدمات</div>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:10px">
+            <a href="#pricing" class="btn primary">ابدأ الآن</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" class="sec faq">
+        <div class="container">
+          <h2>أسئلة شائعة</h2>
+          <div class="card reveal">
+            <div class="q">هل المنصة متوافقة مع سياسات واتساب؟</div>
+            <div class="a">ندعم القوالب المعتمدة والإرسال المسؤول، ونوفر ضوابط للسرعة والقوائم المستهدفة لتجربة آمنة.</div>
+          </div>
+          <div class="card reveal" style="margin-top:10px">
+            <div class="q">هل تدعمون اللهجات الخليجية؟</div>
+            <div class="a">نعم، يمكن ضبط نبرة وكيل الذكاء الاصطناعي لتناسب لهجتك والعلامة التجارية.</div>
+          </div>
+          <div class="card reveal" style="margin-top:10px">
+            <div class="q">هل أستطيع التجربة قبل الدفع؟</div>
+            <div class="a">بالتأكيد. ابدأ مجانًا بدون بطاقة، وارتقِ للخطة المناسبة متى شئت.</div>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:10px">
+            <a href="#pricing" class="btn primary">جرّب الآن مجانًا</a>
+          </div>
+        </div>
+      </section>
+
+      <div class="cta-bar container">
+        <div>
+          <strong>جاهز لرفع مبيعات واتساب؟</strong>
+          <div class="muted">ابدأ خلال دقائق — بلا التزامات.</div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <a href="#pricing" class="btn primary">ابدأ مجانًا</a>
+          <a href="#contact" class="btn ghost">تواصل معنا</a>
+        </div>
+      </div>
+
+      <section id="contact" class="sec">
+        <div class="container card" style="padding:18px;display:flex;align-items:center;justify-content:space-between;gap:14px">
+          <div>
+            <h3 style="margin:0 0 6px">تواصل معنا</h3>
+            <div class="muted">فريقنا يرد خلال ساعات العمل.</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="pill" href="https://wa.me/" target="_blank" rel="noopener">واتساب مباشر</a>
+            <a class="pill" href="mailto:support@example.com">البريد</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    
+    <a class="float-wa" href="https://wa.me/" target="_blank" aria-label="WhatsApp">✆</a>
+    <a class="float-top" href="#" aria-label="Top">↑</a>
+    <button id="botBtn" class="bot-btn" aria-label="Chatbot">🤖</button>
+    <div id="botNudge" class="bot-nudge">تحدث معي 💬</div>
+    <div id="botPanel" class="bot-panel" role="dialog" aria-label="Chatbot">
+      <div class="bot-head">مساعد واتس تول <button id="botClose" class="btn" style="padding:6px 10px;border-radius:8px;background:#fff;color:#0f172a">إغلاق</button></div>
+      <div id="botBody" class="bot-body">
+        <div class="bot-msg">مرحبًا! أنا مساعد واتس تول. اسألني عن الأسعار، الردود التلقائية، أو تشغيل المنصة.</div>
+        <div class="bot-suggest">
+          <span class="bot-chip" data-q="كيف أبدأ؟">كيف أبدأ؟</span>
+          <span class="bot-chip" data-q="ما أسعار الباقات؟">ما أسعار الباقات؟</span>
+          <span class="bot-chip" data-q="هل تدعم العربية والخليجية؟">هل تدعم العربية والخليجية؟</span>
+        </div>
+      </div>
+      <div class="bot-footer">
+        <input id="botInput" type="text" placeholder="اكتب سؤالك..." />
+        <button id="botSend" class="btn primary">إرسال</button>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        function fmt(n){ try { return Number(n).toLocaleString('ar-EG'); } catch { return String(Math.round(Number(n)||0)); } }
+        // Footer year
+        var y=document.getElementById('y'); if (y) y.textContent = new Date().getFullYear();
+
+        // Counters
+        var counters = document.querySelectorAll('[data-counter]');
+        function animateCounter(el){
+          var target = Number(el.getAttribute('data-counter'))||0; var dur=900; var start=performance.now();
+          function step(t){ var p=Math.min((t-start)/dur,1); var val=Math.floor(target*p); el.textContent = target>1000 ? fmt(val) : String(val); if(p<1) requestAnimationFrame(step); }
+          requestAnimationFrame(step);
+        }
+        if ('IntersectionObserver' in window) {
+          var io = new IntersectionObserver(function(entries){ entries.forEach(function(e){ if(e.isIntersecting){ animateCounter(e.target); io.unobserve(e.target); } }); }, {threshold:.3});
+          counters.forEach(function(c){ io.observe(c); });
+        } else { counters.forEach(animateCounter); }
+
+        // Rotating hero value props
+        var phrases=['ذكية وسهلة','سريعة وآمنة','مخصّصة لأسواق الخليج'];
+        var rotator=document.getElementById('rotator'); var pi=0;
+        if (rotator) setInterval(function(){ rotator.style.opacity=.2; setTimeout(function(){ pi=(pi+1)%phrases.length; rotator.textContent=phrases[pi]; rotator.style.opacity=1; },180); },2200);
+
+        // Reveal on scroll
+        var revealItems=[].slice.call(document.querySelectorAll('.reveal'));
+        if ('IntersectionObserver' in window) {
+          var ro=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('show'); ro.unobserve(e.target); } }); },{threshold:.2});
+          revealItems.forEach(function(i){ ro.observe(i); });
+        } else { revealItems.forEach(function(i){ i.classList.add('show'); }); }
+
+        // Pricing & currency
+        var sw=document.getElementById('billingSwitch');
+        var currencySel=document.getElementById('currency');
+        var yearly=false; var monthlyPrices=[].slice.call(document.querySelectorAll('[data-price-m]'));
+        var symbols={SAR:'ر.س', AED:'د.إ', KWD:'د.ك'};
+        var rates={SAR:1, AED:0.98, KWD:0.081};
+        function currentRate(){ var curr = currencySel && currencySel.value || 'SAR'; return rates[curr] || 1; }
+        function currentSymbol(){ var curr = currencySel && currencySel.value || 'SAR'; return symbols[curr] || symbols.SAR; }
+        function updatePrices(){
+          var rate=currentRate();
+          monthlyPrices.forEach(function(el){
+            var base=Number(el.getAttribute('data-price-m'))||0;
+            var monthly=base*rate; var yearlyPrice=Math.round(base*12*0.8*rate);
+            var val=yearly? yearlyPrice : Math.round(monthly);
+            el.textContent = fmt(val);
+          });
+          document.querySelectorAll('.curr-symbol').forEach(function(s){ s.textContent=currentSymbol(); });
+          document.querySelectorAll('.plan .price small').forEach(function(s){ s.textContent = yearly? '/ سنوي' : '/ شهر'; });
+          calcROI();
+        }
+        if (sw) sw.addEventListener('click',function(){ yearly=!yearly; sw.classList.toggle('active',yearly); updatePrices(); });
+        if (currencySel) currencySel.addEventListener('change', updatePrices);
+        updatePrices();
+
+        // ROI calculator
+        var leadEl=document.getElementById('roiLeads');
+        var convEl=document.getElementById('roiConv');
+        var aovEl=document.getElementById('roiAov');
+        var marginEl=document.getElementById('roiMargin');
+        var revenueEl=document.getElementById('roiRevenue');
+        var ratioEl=document.getElementById('roiRatio');
+        function num(el){ return Number(el && el.value || 0) || 0; }
+        function calcROI(){
+          if (!leadEl || !convEl || !aovEl || !marginEl || !revenueEl || !ratioEl) return;
+          var leadsW=num(leadEl); var conv=num(convEl)/100; var aov=num(aovEl); var margin=num(marginEl)/100;
+          var monthlyLeads=leadsW*4; var orders=monthlyLeads*conv; var profit=orders*aov*margin;
+          var rate=currentRate();
+          var priceBusiness=(yearly? 349*12*0.8 : 349)*rate;
+          revenueEl.textContent=fmt(Math.round(profit*rate));
+          ratioEl.textContent = priceBusiness>0 ? (Math.max((profit*rate/priceBusiness),0)).toFixed(1) : '0';
+        }
+        ;[leadEl,convEl,aovEl,marginEl].forEach(function(i){ if(i){ i.addEventListener('input', calcROI); i.addEventListener('change', calcROI);} });
+        calcROI();
+
+        // FAQ accordion
+        document.querySelectorAll('.faq .card').forEach(function(card){
+          var q=card.querySelector('.q'); var a=card.querySelector('.a');
+          if(q) q.addEventListener('click',function(){ var open=a && a.style.display==='block'; document.querySelectorAll('.faq .a').forEach(function(x){ x.style.display='none'; }); if(a) a.style.display = open? 'none':'block'; });
+        });
+
+        // Scrollspy
+        if ('IntersectionObserver' in window) {
+        var sections=['features','compare','case-study','roi','pricing','faq','contact'];
+          var navLinks=[].slice.call(document.querySelectorAll('header nav .pill'));
+          var so=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting){ var id=e.target.id; navLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href')==='#'+id); }); } }); },{threshold:.5, rootMargin:'-20% 0px -60% 0px'});
+          sections.forEach(function(id){ var el=document.getElementById(id); if(el) so.observe(el); });
+        }
+
+        // Testimonials auto-scroll
+        var slider=document.getElementById('slider'); var pos=0; if (slider) setInterval(function(){ pos+=1; if(pos>slider.scrollWidth-slider.clientWidth) pos=0; slider.scrollTo({left:pos,behavior:'smooth'}); }, 60);
+
+        // Chatbot widget (front-end only)
+        var botBtn=document.getElementById('botBtn');
+        var botPanel=document.getElementById('botPanel');
+        var botClose=document.getElementById('botClose');
+        var botBody=document.getElementById('botBody');
+        var botInput=document.getElementById('botInput');
+        var botSend=document.getElementById('botSend');
+        var botNudge=document.getElementById('botNudge');
+        function openBot(){ botPanel.classList.add('open'); }
+        function closeBot(){ botPanel.classList.remove('open'); }
+        if (botBtn) botBtn.addEventListener('click', function(){ botPanel.classList.contains('open')? closeBot(): openBot(); if(botNudge){ botNudge.style.display='none'; botBtn.classList.remove('pulse'); }});
+        if (botClose) botClose.addEventListener('click', closeBot);
+        function addMsg(text, me){
+          var div=document.createElement('div'); div.className='bot-msg'+(me?' me':''); div.textContent=text; botBody.appendChild(div); botBody.scrollTop=botBody.scrollHeight;
+        }
+        function replyTo(q){
+          var lc=(q||'').trim(); if(!lc) return;
+          addMsg(q, true);
+          var a='';
+          if(lc.indexOf('سعر')>-1||lc.indexOf('الباقات')>-1) a='خطتنا الأكثر طلبًا 349 ر.س شهريًا، ادّخر 20٪ عند الاشتراك السنوي.';
+          else if(lc.indexOf('أبدأ')>-1||lc.indexOf('ابدأ')>-1) a='انقر ابدأ مجانًا، اربط رقمك واتبع التعليمات. يستغرق الإعداد نحو 7 دقائق.';
+          else if(lc.indexOf('عربي')>-1||lc.indexOf('خليج')>-1) a='نعم، ندعم العربية ولهجات الخليج، ويمكن ضبط نبرة الوكيل الذكي لعلامتك.';
+          else if(lc.indexOf('واتساب')>-1&&lc.indexOf('رسمي')>-1) a='نستخدم قوالب رسمية معتمدة ونلتزم بسياسات واتساب للإرسال المسؤول.';
+          else a='سؤال رائع! راجع المزايا والأسعار بالصفحة أو تواصل عبر واتساب لأي تفاصيل.';
+          setTimeout(function(){ addMsg(a, false); }, 300);
+        }
+        if (botSend) botSend.addEventListener('click', function(){ replyTo(botInput.value); botInput.value=''; botInput.focus(); });
+        if (botInput) botInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){ replyTo(botInput.value); botInput.value=''; }});
+        [].slice.call(document.querySelectorAll('.bot-chip')).forEach(function(c){ c.addEventListener('click', function(){ replyTo(c.getAttribute('data-q')); }); });
+        // Auto nudge after delay
+        setTimeout(function(){ if(botNudge){ botNudge.classList.add('show'); } if(botBtn){ botBtn.classList.add('pulse'); } }, 1500);
+      })();
+    </script>
+  </body>
+  </html>
+
+

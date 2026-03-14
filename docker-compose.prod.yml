@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  whatsapp-tool:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./.wwebjs_auth:/app/.wwebjs_auth
+    environment:
+      - NODE_ENV=production
+      - TZ=Africa/Cairo
+      - CHROME_PATH=/usr/bin/chromium
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G

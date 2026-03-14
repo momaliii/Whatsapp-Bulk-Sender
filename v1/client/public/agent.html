@@ -1,0 +1,860 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Agent</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #111827;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #4f46e5;
+        --primary-600: #4f46e5;
+        --primary-700: #4338ca;
+        --success: #16a34a;
+        --danger: #dc2626;
+        --warning: #f59e0b;
+      }
+      [data-theme="dark"] {
+        --bg: #0b1220;
+        --card: #0f172a;
+        --text: #e5e7eb;
+        --muted: #94a3b8;
+        --border: #1f2a44;
+        --primary: #7c83ff;
+        --primary-600: #6366f1;
+        --primary-700: #4f46e5;
+        --success: #22c55e;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+      }
+      html {
+        height: 100%;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+      
+      body {
+        margin: 0;
+        min-height: 100%;
+        font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        color: var(--text);
+        background: radial-gradient(1000px 500px at -10% -10%, #eef2ff 0%, rgba(238,242,255,0) 60%),
+                    radial-gradient(800px 400px at 110% -20%, #fef3c7 0%, rgba(254,243,199,0) 60%),
+                    var(--bg);
+        overflow-x: hidden;
+        overflow-y: auto;
+        position: relative;
+      }
+      
+      body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(1200px 600px at -20% -20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+                    radial-gradient(1000px 500px at 120% -30%, rgba(168, 85, 247, 0.1) 0%, transparent 50%);
+        animation: backgroundFloat 20s ease-in-out infinite;
+        pointer-events: none;
+        z-index: -1;
+      }
+      
+      @keyframes backgroundFloat {
+        0%, 100% { transform: translate(0, 0) rotate(0deg); }
+        33% { transform: translate(30px, -30px) rotate(120deg); }
+        66% { transform: translate(-20px, 20px) rotate(240deg); }
+      }
+      
+      .container {
+        max-width: 1400px;
+        margin: 20px auto;
+        padding: 0 16px;
+        position: relative;
+        z-index: 1;
+      }
+      
+      h2 {
+        margin: 0 0 24px 0;
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text);
+        text-align: center;
+        position: relative;
+      }
+      
+      .row {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      
+      .card {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 28px;
+        box-shadow: 
+          0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06),
+          0 0 0 1px rgba(255, 255, 255, 0.05);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        backdrop-filter: blur(20px) saturate(180%);
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+      
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 
+          0 20px 25px -5px rgba(0, 0, 0, 0.1),
+          0 10px 10px -5px rgba(0, 0, 0, 0.04),
+          0 0 0 1px rgba(255, 255, 255, 0.1);
+      }
+      
+      .card:hover::before {
+        opacity: 1;
+      }
+      
+      .card:active {
+        transform: translateY(-2px);
+      }
+      
+      [data-theme="dark"] .card {
+        background: rgba(15, 23, 42, 0.8);
+        border-color: rgba(255, 255, 255, 0.1);
+      }
+      
+      .card-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+      }
+      
+      .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        flex-shrink: 0;
+      }
+      
+      .card-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      
+      .card-header p {
+        margin: 2px 0 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      
+      .form-section {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 16px;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+      }
+      
+      .form-section:hover {
+        background: rgba(255, 255, 255, 0.8);
+        border-color: rgba(59, 130, 246, 0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+      }
+      
+      .form-group {
+        margin-bottom: 16px;
+        position: relative;
+      }
+      
+      .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.8);
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        font-size: 14px;
+        color: var(--text);
+        box-sizing: border-box;
+      }
+      
+      .form-group input:focus,
+      .form-group select:focus,
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        background: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+      }
+      
+      .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+      
+      .action-btn {
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        gap: 8px;
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        font-size: 14px;
+      }
+      
+      .action-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s ease;
+      }
+      
+      .action-btn:hover::before {
+        left: 100%;
+      }
+      
+      .action-btn:active {
+        transform: translateY(1px) scale(0.98);
+      }
+      
+      .action-btn.primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+      }
+      
+      .action-btn.primary:hover {
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      .action-btn.secondary {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+        color: var(--text);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+      }
+      
+      .action-btn.secondary:hover {
+        background: linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      
+      .action-btn.danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 4px 14px rgba(239, 68, 68, 0.3);
+      }
+      
+      .action-btn.danger:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        transform: translateY(-2px);
+      }
+      
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid rgba(226, 232, 240, 0.5);
+        border-radius: 16px;
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+      
+      thead th {
+        background: linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%);
+        border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+        font-weight: 600;
+        color: var(--text);
+        padding: 16px 20px;
+        text-align: left;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      th, td {
+        padding: 16px 20px;
+        text-align: left;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+        transition: background-color 0.2s ease;
+      }
+      
+      tr:hover td {
+        background: rgba(59, 130, 246, 0.05);
+      }
+      
+      .inline {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      
+      .muted {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      
+      /* Enhanced Animations */
+      .fade-in {
+        animation: fadeIn 0.5s ease-in-out;
+      }
+      
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .float-animation {
+        animation: float 3s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+      }
+      
+      .pulse-animation {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      
+      .slide-up {
+        animation: slideUp 0.5s ease-out;
+      }
+      
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .scale-in {
+        animation: scaleIn 0.3s ease-out;
+      }
+      
+      @keyframes scaleIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      
+      .shimmer {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      
+      @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+      }
+      
+      /* Status Indicators */
+      .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      
+      .status-enabled {
+        background: rgba(34, 197, 94, 0.1);
+        color: #16a34a;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+      }
+      
+      .status-disabled {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc2626;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+      }
+    </style>
+    <link rel="stylesheet" href="/public/nav.css" />
+  </head>
+  <body>
+    <link rel="stylesheet" href="/public/nav.css">
+    <link rel="stylesheet" href="/public/dark-theme.css">
+    <script src="/public/nav.js"></script>
+    <script src="/public/theme-init.js"></script>
+    <div class="container with-drawer">
+      <div class="header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding: 20px 0; border-bottom: 1px solid var(--border);">
+        <div class="header-left">
+          <h2 style="margin:0; display: flex; align-items: center; gap: 12px;">
+            <span class="float-animation" style="font-size: 32px; display: inline-block;">🤖</span>
+            <span>AI Agent</span> Configuration
+          </h2>
+          <p style="margin: 4px 0 0 0; color: var(--muted); font-size: 14px; display: flex; align-items: center; gap: 8px;">
+            <span class="pulse-animation" style="width: 6px; height: 6px; background: linear-gradient(45deg, #8b5cf6, #a855f7); border-radius: 50%; display: inline-block;"></span>
+            Configure your intelligent WhatsApp assistant with AI capabilities
+          </p>
+        </div>
+        <div class="header-actions" style="display: flex; gap: 12px; align-items: center;">
+          <a href="/" style="text-decoration:none;">
+            <button class="action-btn secondary" type="button" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              Back to Dashboard
+            </button>
+          </a>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="card" style="flex:1; min-width:320px;">
+          <div class="card-header">
+            <div class="status-icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">⚙️</div>
+            <div>
+              <h3>Agent Settings</h3>
+              <p>Configure AI agent behavior and API settings</p>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-group">
+              <label>Agent Status</label>
+              <select id="enabled">
+                <option value="1">Enabled</option>
+                <option value="0">Disabled</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>OpenAI API Key</label>
+              <input id="apiKey" type="password" placeholder="sk-..." />
+              <small class="muted">Securely stored on the server</small>
+            </div>
+            <div class="form-group">
+              <label>System Prompt</label>
+              <textarea id="prompt" placeholder="You are a helpful WhatsApp assistant. Provide accurate, concise responses based on the knowledge base."></textarea>
+            </div>
+          </div>
+          
+          <div class="inline" style="gap: 12px;">
+            <button id="saveSettings" class="action-btn primary" style="display: flex; align-items: center; gap: 8px;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+              Save Settings
+            </button>
+          </div>
+        </div>
+        <div class="card" style="flex:2; min-width:320px;">
+          <div class="card-header">
+            <div class="status-icon" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">📚</div>
+            <div>
+              <h3>Knowledge Base</h3>
+              <p>Manage your AI agent's knowledge and training data</p>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-group">
+              <label>Add Text Content</label>
+              <textarea id="docText" placeholder="Paste product FAQ, company info, policies, or any relevant information for your AI agent..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Target Session</label>
+              <select id="textSessionSelect">
+                <option value="default">Default Session (Knowledge Base Only)</option>
+              </select>
+              <small class="muted">Choose which WhatsApp session this content will be added to</small>
+            </div>
+            <div class="inline" style="gap: 12px;">
+              <button id="addDoc" class="action-btn primary" style="display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10,9 9,9 8,9"/></svg>
+                Add to Knowledge Base
+              </button>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-group">
+              <label>Upload Document</label>
+              <input id="docFile" type="file" accept=".txt,.pdf,.docx,.md" />
+              <small class="muted">Supported formats: TXT, PDF, DOCX, Markdown</small>
+            </div>
+            <div class="form-group">
+              <label>Target Session</label>
+              <select id="fileSessionSelect">
+                <option value="default">Default Session (Knowledge Base Only)</option>
+              </select>
+              <small class="muted">Choose which WhatsApp session this document will be added to</small>
+            </div>
+            <div class="inline" style="gap: 12px;">
+              <button id="uploadDoc" class="action-btn secondary" style="display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Upload Document
+              </button>
+              <span id="uploadNote" class="muted"></span>
+            </div>
+          </div>
+          
+          <div style="margin-top: 20px;">
+            <h4 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 600; color: var(--text);">Knowledge Base Documents</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Content Preview</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="docsBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card" style="flex:1; min-width:320px;">
+          <div class="card-header">
+            <div class="status-icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">🎯</div>
+            <div>
+              <h3>Session Prompts</h3>
+              <p>Customize AI behavior per WhatsApp session</p>
+            </div>
+          </div>
+          
+          <div class="form-section">
+            <div class="form-group">
+              <label>Select Session</label>
+              <select id="sessSel">
+                <option value="">Choose a session...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input id="sessAgentEnabled" type="checkbox" checked style="width: 16px; height: 16px;" />
+                <span>Enable AI Agent for this session</span>
+              </label>
+              <small class="muted">Uncheck to disable AI agent responses for this WhatsApp session</small>
+            </div>
+            <div class="form-group">
+              <label>Custom Prompt</label>
+              <textarea id="sessPrompt" placeholder="Override the global system prompt for this specific session. Leave blank to use the global prompt."></textarea>
+            </div>
+            <div class="inline" style="gap: 12px;">
+              <button id="saveSessPrompt" class="action-btn primary" style="display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+                Save Prompt
+              </button>
+              <button id="delSessPrompt" class="action-btn danger" style="display: flex; align-items: center; gap: 8px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/></svg>
+                Delete
+              </button>
+            </div>
+            <div class="muted" style="margin-top: 12px; padding: 12px; background: rgba(59, 130, 246, 0.1); border-radius: 8px; border-left: 3px solid #3b82f6;">
+              <strong>💡 Tip:</strong> Leave the prompt blank to reset this session to use the global system prompt.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      async function loadSettings(){
+        const s = await fetch('/api/agent/settings').then(r=>r.json());
+        document.getElementById('enabled').value = s.enabled? '1':'0';
+        document.getElementById('prompt').value = s.prompt || '';
+        document.getElementById('apiKey').placeholder = s.hasKey ? '●●●●●●●● set' : 'sk-...';
+      }
+      async function saveSettings(){
+        const keyVal = document.getElementById('apiKey').value.trim();
+        const payload = { enabled: document.getElementById('enabled').value==='1', prompt: document.getElementById('prompt').value };
+        if (keyVal) payload.apiKey = keyVal; // only send if user entered
+        await fetch('/api/agent/settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+        document.getElementById('apiKey').value = '';
+        loadSettings();
+      }
+      async function loadDocs(){
+        const sessionId = document.getElementById('sessSel').value || 'default';
+        const d = await fetch(`/api/agent/docs?sessionId=${encodeURIComponent(sessionId)}`).then(r=>r.json());
+        const body = document.getElementById('docsBody'); body.innerHTML='';
+        (d.docs||[]).forEach(x => {
+          const tr = document.createElement('tr');
+          tr.className = 'slide-up';
+          const short = (x.content || '').slice(0, 160).replace(/\n/g, ' ');
+          tr.innerHTML = `
+            <td style="font-family: monospace; font-size: 11px; color: var(--muted);">${x.id}</td>
+            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${short}">${short}</td>
+            <td>
+              <button data-id="${x.id}" class="action-btn danger del" style="padding: 6px 12px; font-size: 11px; display: flex; align-items: center; gap: 4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3,6 5,6 21,6"/><path d="M19,6v14a2,2 0 0,1 -2,2H7a2,2 0 0,1 -2,-2V6m3,0V4a2,2 0 0,1 2,-2h4a2,2 0 0,1 2,2v2"/></svg>
+                Delete
+              </button>
+            </td>
+          `;
+          body.appendChild(tr);
+        });
+        body.querySelectorAll('button.del').forEach(b=> b.onclick = async ()=>{ await fetch(`/api/agent/docs/${b.getAttribute('data-id')}`, { method:'DELETE' }); loadDocs(); });
+      }
+      document.getElementById('saveSettings').onclick = saveSettings;
+      document.getElementById('addDoc').onclick = async ()=>{
+        const text = document.getElementById('docText').value.trim();
+        if(!text) return;
+        const sessionId = document.getElementById('textSessionSelect').value || 'default';
+        await fetch('/api/agent/docs', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ content: text, sessionId }) });
+        document.getElementById('docText').value='';
+        loadDocs();
+      };
+      document.getElementById('uploadDoc').onclick = async ()=>{
+        const file = document.getElementById('docFile').files[0];
+        if(!file) return;
+        const sessionId = document.getElementById('fileSessionSelect').value || 'default';
+        const note = document.getElementById('uploadNote');
+        note.textContent='Uploading...';
+        const form = new FormData(); 
+        form.append('file', file);
+        form.append('sessionId', sessionId);
+        const res = await fetch('/api/agent/docs/upload', { method:'POST', body: form });
+        const data = await res.json();
+        if(!res.ok) { note.textContent = data.error || 'Upload failed'; return; }
+        note.textContent = `Added ${data.added} chunk(s)`;
+        loadDocs();
+      };
+      async function loadSessions(){
+        const res = await fetch('/api/sessions'); const data = await res.json();
+        
+        // Update main session selector
+        const s = document.getElementById('sessSel'); s.innerHTML='';
+        // Always add default option first
+        const defaultOption = document.createElement('option');
+        defaultOption.value = 'default';
+        defaultOption.textContent = 'Default Session (Knowledge Base Only)';
+        s.appendChild(defaultOption);
+        // Add real sessions
+        (data.sessions||[]).forEach(x=>{ const o=document.createElement('option'); o.value=x.id; o.textContent=`${x.id} ${x.ready?'(ready)':''}`; s.appendChild(o); });
+        // Add event listener to reload docs when session changes
+        s.addEventListener('change', loadDocs);
+        // Add event listener to load session prompt when session changes
+        s.addEventListener('change', loadSessionPrompt);
+        
+        // Update text content session selector
+        const textSessionSelect = document.getElementById('textSessionSelect');
+        if (textSessionSelect) {
+          textSessionSelect.innerHTML = '<option value="default">Default Session (Knowledge Base Only)</option>';
+          (data.sessions||[]).forEach(x=>{ 
+            const o=document.createElement('option'); 
+            o.value=x.id; 
+            o.textContent=`${x.id} ${x.ready?'(ready)':''}`; 
+            textSessionSelect.appendChild(o); 
+          });
+        }
+        
+        // Update file upload session selector
+        const fileSessionSelect = document.getElementById('fileSessionSelect');
+        if (fileSessionSelect) {
+          fileSessionSelect.innerHTML = '<option value="default">Default Session (Knowledge Base Only)</option>';
+          (data.sessions||[]).forEach(x=>{ 
+            const o=document.createElement('option'); 
+            o.value=x.id; 
+            o.textContent=`${x.id} ${x.ready?'(ready)':''}`; 
+            fileSessionSelect.appendChild(o); 
+          });
+        }
+      }
+      async function saveSessPrompt(){
+        const sessionId = document.getElementById('sessSel').value; if(!sessionId) return;
+        const prompt = document.getElementById('sessPrompt').value;
+        const enabled = document.getElementById('sessAgentEnabled').checked;
+        await fetch('/api/agent/session-prompts', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId, prompt, enabled }) });
+      }
+      async function delSessPrompt(){
+        const sessionId = document.getElementById('sessSel').value; if(!sessionId) return;
+        await fetch(`/api/agent/session-prompts/${sessionId}`, { method:'DELETE' });
+        document.getElementById('sessPrompt').value='';
+        document.getElementById('sessAgentEnabled').checked = true;
+      }
+      
+      async function loadSessionPrompt(){
+        const sessionId = document.getElementById('sessSel').value;
+        if (!sessionId) {
+          document.getElementById('sessPrompt').value = '';
+          document.getElementById('sessAgentEnabled').checked = true;
+          return;
+        }
+        
+        try {
+          const res = await fetch('/api/agent/session-prompts');
+          const data = await res.json();
+          const sessionPrompt = data.prompts?.find(p => p.session_id === sessionId);
+          
+          if (sessionPrompt) {
+            document.getElementById('sessPrompt').value = sessionPrompt.prompt || '';
+            document.getElementById('sessAgentEnabled').checked = sessionPrompt.enabled !== 0;
+          } else {
+            document.getElementById('sessPrompt').value = '';
+            document.getElementById('sessAgentEnabled').checked = true;
+          }
+        } catch (e) {
+          document.getElementById('sessPrompt').value = '';
+          document.getElementById('sessAgentEnabled').checked = true;
+        }
+      }
+      document.getElementById('saveSessPrompt').onclick = saveSessPrompt;
+      document.getElementById('delSessPrompt').onclick = delSessPrompt;
+      // Enhanced animations and interactions
+      document.addEventListener('DOMContentLoaded', () => {
+        // Add fade-in animation to cards
+        const cards = document.querySelectorAll('.card');
+        cards.forEach((card, index) => {
+          card.style.opacity = '0';
+          card.style.transform = 'translateY(20px)';
+          setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+          }, index * 150);
+        });
+        
+        // Enhanced button interactions
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(button => {
+          button.addEventListener('click', function() {
+            if (this.id === 'saveSettings' || this.id === 'addDoc' || this.id === 'uploadDoc') {
+              this.classList.add('pulse-animation');
+              setTimeout(() => {
+                this.classList.remove('pulse-animation');
+              }, 2000);
+            }
+          });
+        });
+        
+        // Enhanced table row interactions
+        const table = document.querySelector('table');
+        if (table) {
+          table.addEventListener('mouseover', function(e) {
+            if (e.target.tagName === 'TD') {
+              const row = e.target.parentElement;
+              row.style.transform = 'scale(1.02)';
+              row.style.transition = 'transform 0.2s ease';
+              row.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            }
+          });
+          
+          table.addEventListener('mouseout', function(e) {
+            if (e.target.tagName === 'TD') {
+              const row = e.target.parentElement;
+              row.style.transform = 'scale(1)';
+              row.style.boxShadow = 'none';
+            }
+          });
+        }
+        
+        // Enhanced form interactions
+        const formInputs = document.querySelectorAll('.form-group input, .form-group select, .form-group textarea');
+        formInputs.forEach(input => {
+          input.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'translateY(-2px)';
+            this.parentElement.style.transition = 'transform 0.2s ease';
+          });
+          
+          input.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'translateY(0)';
+          });
+        });
+        
+        // Add loading states to buttons
+        const saveBtn = document.getElementById('saveSettings');
+        if (saveBtn) {
+          saveBtn.addEventListener('click', function() {
+            this.classList.add('shimmer');
+            setTimeout(() => {
+              this.classList.remove('shimmer');
+            }, 1000);
+          });
+        }
+        
+        const addDocBtn = document.getElementById('addDoc');
+        if (addDocBtn) {
+          addDocBtn.addEventListener('click', function() {
+            this.classList.add('shimmer');
+            setTimeout(() => {
+              this.classList.remove('shimmer');
+            }, 1000);
+          });
+        }
+        
+        const uploadBtn = document.getElementById('uploadDoc');
+        if (uploadBtn) {
+          uploadBtn.addEventListener('click', function() {
+            this.classList.add('shimmer');
+            setTimeout(() => {
+              this.classList.remove('shimmer');
+            }, 1000);
+          });
+        }
+      });
+      
+      loadSessions();
+      loadSettings();
+      loadDocs();
+    </script>
+  </body>
+  </html>
+
+

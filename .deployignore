@@ -1,0 +1,32 @@
+# Exclusions for rsync-based deployments
+
+# Folders
+node_modules/
+.git/
+.tmp/
+tmp/
+.temp/
+.cache/
+
+# Local data and databases (managed on server)
+data/
+server/data/
+
+# Session/cache/runtime artifacts
+**/*.wwebjs*
+**/.wwebjs*
+
+# Logs and OS cruft
+**/*.log
+**/.DS_Store
+
+# Large or temporary uploads (adjust as needed)
+uploads/*.webm
+uploads/*.png
+uploads/*.tmp
+uploads/*_voice_note.webm
+
+# Build artifacts (if any)
+dist/
+build/
+.out/

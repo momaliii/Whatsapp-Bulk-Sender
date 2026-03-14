@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirmation Orders</title>
+    <link rel="stylesheet" href="/public/nav.css" />
+    <link rel="stylesheet" href="/public/dark-theme.css" />
+    <script defer src="/public/theme-init.js"></script>
+    <style>
+      *{box-sizing:border-box}
+      body{margin:0;font-family:-apple-system,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#f8fafc,#eef2ff);color:var(--text)}
+      .wrap{max-width:1180px;margin:22px auto;padding:0 16px}
+      .card{background:#ffffff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 16px 40px rgba(2,6,23,.08);overflow:hidden}
+      .hd{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}
+      .bd{padding:18px;display:grid;gap:14px}
+      .grid{display:grid;gap:10px;grid-template-columns:repeat(12,1fr)}
+      .col-3{grid-column:span 3}
+      .col-4{grid-column:span 4}
+      .col-6{grid-column:span 6}
+      .col-12{grid-column:span 12}
+      .row{display:flex;gap:10px;flex-wrap:wrap}
+      label{font-size:12px;color:#64748b;font-weight:700;margin-bottom:4px;display:block}
+      input,select,textarea{border:1px solid #d1d5db;background:#fff;color:#0f172a;border-radius:12px;padding:10px 12px;outline:none;transition:box-shadow .15s ease,border-color .15s ease}
+      input:focus,select:focus,textarea:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.18)}
+      textarea{min-height:110px}
+      .btn{appearance:none;border:1px solid #2563eb;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;cursor:pointer;box-shadow:0 10px 26px rgba(37,99,235,.25)}
+      .btn:hover{transform:translateY(-1px)}
+      .btn.ghost{background:#fff;border-color:#d1d5db;color:#0f172a;box-shadow:none}
+      .btn.small{padding:6px 10px;border-radius:8px;font-weight:700}
+      table{width:100%;border-collapse:collapse}
+      th,td{border:1px solid #e5e7eb;padding:10px;font-size:13px}
+      th{background:#f8fafc;position:sticky;top:0}
+      .muted{color:var(--muted,#64748b);font-size:12px}
+      .chips{display:flex;gap:6px;flex-wrap:wrap}
+      .chip{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:#f1f5f9;font-weight:700;font-size:12px;cursor:pointer}
+      .status-ok{color:#16a34a}
+      .status-fail{color:#ef4444}
+      .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+      @media (max-width: 900px){ .two-col{grid-template-columns:1fr} }
+      .toast-wrap{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:80}
+      .toast{background:#111827;color:#fff;padding:10px 12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);font-size:13px;opacity:.95}
+      .section{padding:14px;border:1px solid #e5e7eb;border-radius:14px;background:#fbfdff}
+      .section-title{font-weight:900;display:flex;align-items:center;gap:8px;margin-bottom:6px}
+      .step{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#e0e7ff;color:#1e3a8a;font-weight:900}
+      .badges{display:flex;gap:8px;flex-wrap:wrap}
+      .badge{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid #e5e7eb;border-radius:999px;background:#f1f5f9;font-weight:700;font-size:12px}
+    </style>
+  </head>
+  <body>
+    <script src="/public/nav.js"></script>
+    <div class="wrap">
+      <div class="card">
+        <div class="hd">
+          <h2 style="margin:0">Confirmation Orders</h2>
+          <div class="row">
+            <button id="saveCfg" class="btn ghost">Save Config</button>
+            <button id="pollNow" class="btn">Poll Now</button>
+          </div>
+        </div>
+        <div class="bd">
+          <!-- Step 1: Connect to sheet and session -->
+          <div class="section grid">
+            <div class="col-12 section-title"><span class="step">1</span> Connect</div>
+            <div class="col-3 row" style="align-items:center; gap:8px;">
+              <select id="sessionId"><option value="default">default</option></select>
+              <button id="refreshSessions" class="btn small ghost" title="Refresh sessions">⟳</button>
+            </div>
+            <div class="col-9 muted">Pick the WhatsApp session to send from. Ready sessions are marked ✅.</div>
+            <input class="col-6" id="sheetId" placeholder="Spreadsheet ID" />
+            <div class="col-6 row" style="gap:8px; align-items:center;">
+              <select id="sheetTitle"><option value="">Sheet…</option></select>
+              <input id="range" placeholder="Range (e.g. A1:H1000)" style="flex:1;" />
+              <button id="fetchSheets" class="btn small ghost" title="List sheets">List Sheets</button>
+            </div>
+            <div class="col-3"><label for="headerRow">Header row</label><input id="headerRow" type="number" placeholder="Header row (e.g. 1)" /></div>
+            <div class="col-3"><label for="startRow">Data start row</label><input id="startRow" type="number" placeholder="Data start row (e.g. 2)" /></div>
+            <input class="col-3" id="pollSec" type="number" placeholder="Poll seconds (e.g. 15)" />
+            <div class="col-3 row" style="justify-content:flex-end;gap:8px">
+              <button id="fetchHeader" class="btn small">Connect & Fetch Header</button>
+              <button id="pollNow" class="btn small ghost">Preview</button>
+            </div>
+            <div class="col-12 muted">After connecting, choose which columns map to phone and status.</div>
+          </div>
+
+          <!-- Step 2: Map columns and behavior -->
+          <div class="section grid" style="margin-top:10px">
+            <div class="col-12 section-title"><span class="step">2</span> Mapping & Behavior</div>
+            <input class="col-3" id="countryCode" placeholder="Country code (e.g. +966)" />
+            <select class="col-3" id="phoneHeader"><option value="">Phone header…</option></select>
+            <select class="col-3" id="statusHeader"><option value="">Status header… (optional)</option></select>
+            <div class="col-3 muted">Status is considered "empty" = needs sending</div>
+            <input class="col-3" id="sentText" placeholder="Write-back text (SENT)" />
+            <input class="col-3" id="failedText" placeholder="Write-back text (FAILED)" />
+            <label class="col-3" style="display:flex;align-items:center;gap:6px"><input id="writeBack" type="checkbox" checked /> Write back status</label>
+            <div class="col-3 badges" id="previewStats"></div>
+            <div class="col-6 muted">If enabled and status header is set, we write back SENT/FAILED after sending.</div>
+          </div>
+
+          <!-- Step 3: Compose and run -->
+          <div class="two-col section" style="margin-top:10px;">
+            <div>
+              <label style="font-weight:700; display:block; margin:6px 0;">3) Confirmation Message</label>
+              <div class="row" style="align-items:center; justify-content:space-between; gap:8px;">
+                <div id="chips" class="chips" style="margin-bottom:8px;"></div>
+                <button id="testSend" class="btn small ghost" title="Build message using first row and show preview">Test Send (Preview)</button>
+              </div>
+              <textarea id="confirmMsg" placeholder="Hi {name}, we received your order #{order_id}. Reply 1 to confirm."></textarea>
+              <div class="muted">Click a header chip to insert a variable. Also available: {date}, {time}.</div>
+              <div class="row" style="margin-top:8px;">
+                <button id="start" class="btn">Start Polling</button>
+                <button id="stop" class="btn ghost">Stop</button>
+                <button id="saveTask" class="btn ghost">Save as Task</button>
+              </div>
+            </div>
+            <div>
+              <div class="row" style="align-items:center; justify-content:space-between">
+                <label style="font-weight:700; display:block; margin:6px 0;">Live Sending Report</label>
+                <div class="badges" id="counters"><span class="badge">Sent: <b id="cntSent">0</b></span><span class="badge">Failed: <b id="cntFail">0</b></span><span class="badge">Pending est.: <b id="cntPend">0</b></span></div>
+              </div>
+              <div style="max-height:280px; overflow:auto; border:1px solid var(--border); border-radius:10px;">
+                <table>
+                  <thead>
+                    <tr><th>Time</th><th>Row</th><th>Phone</th><th>Status</th><th>Note</th></tr>
+                  </thead>
+                  <tbody id="reportBody"></tbody>
+                </table>
+              </div>
+              <div class="row" style="margin-top:6px;justify-content:flex-end"><button id="exportCsv" class="btn small ghost">Export CSV</button></div>
+            </div>
+          </div>
+          <details style="margin-top:6px;">
+            <summary style="font-weight:700; cursor:pointer;">Tasks (multi sheets)</summary>
+            <div style="margin-top:8px; max-height:260px; overflow:auto; border:1px solid var(--border); border-radius:10px;">
+              <table>
+                <thead><tr><th>Name</th><th>Session</th><th>Range</th><th>Poll(s)</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="tasksBody"></tbody>
+              </table>
+            </div>
+          </details>
+          <div style="margin-top:6px;">
+            <label style="font-weight:700; display:block; margin:6px 0;">Sheet Preview</label>
+            <div style="max-height:340px; overflow:auto; border:1px solid var(--border); border-radius:10px;">
+              <table>
+                <thead><tr id="thead"></tr></thead>
+                <tbody id="tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div id="log" class="muted"></div>
+        </div>
+      </div>
+    </div>
+    <div id="toasts" class="toast-wrap"></div>
+
+    <script>
+      const $ = (s)=>document.querySelector(s);
+      const log = (m)=>{ const el=$('#log'); el.textContent = new Date().toLocaleTimeString()+': '+m+'\n'+el.textContent; };
+      const cfgKey = 'confirm_orders_cfg';
+      const tasksKey = 'confirm_orders_tasks';
+
+      async function loadSessions(){
+        try{
+          const r = await fetch('/api/sessions?ts='+Date.now());
+          const j = await r.json();
+          const sel = $('#sessionId');
+          if (!sel) return;
+          const curVal = sel.value;
+          const arr = Array.isArray(j) ? j : (Array.isArray(j.sessions) ? j.sessions : []);
+          const options = arr.map(s=>`<option value="${s.id}">${s.id}${s.ready?' ✅':''}</option>`).join('');
+          sel.innerHTML = options || '<option value="default">default</option>';
+          if (curVal) sel.value = curVal;
+        }catch{}
+      }
+
+      function loadCfg(){
+        try{ const j = JSON.parse(localStorage.getItem(cfgKey)||'{}');
+          $('#sheetId').value = j.sheetId || '';
+          $('#range').value = j.range || '';
+          $('#headerRow').value = j.headerRow || 1;
+          $('#startRow').value = j.startRow || 2;
+          $('#countryCode').value = j.countryCode || '';
+          $('#pollSec').value = j.pollSec || 15;
+          $('#confirmMsg').value = j.confirmMsg || '';
+          $('#sentText').value = j.sentText || 'SENT';
+          $('#failedText').value = j.failedText || 'FAILED';
+          $('#sessionId').value = j.sessionId || 'default';
+          if (j.phoneHeader) { const ph = document.getElementById('phoneHeader'); if (ph) ph.value = j.phoneHeader; }
+          if (j.statusHeader) { const sh = document.getElementById('statusHeader'); if (sh) sh.value = j.statusHeader; }
+          const wb = document.getElementById('writeBack'); if (wb) wb.checked = (j.writeBack !== false);
+        }catch{}
+      }
+      function saveCfg(){
+        const val = (id, def='') => { const el = document.getElementById(id); return (el && el.value!=null) ? el.value : def; };
+        const j = {
+          sheetId: String(val('sheetId','')).trim(),
+          range: String(val('range','')).trim(),
+          headerRow: Number(val('headerRow', 1) || 1),
+          startRow: Number(val('startRow', 2) || 2),
+          countryCode: String(val('countryCode','')).trim(),
+          pollSec: Math.max(3, Number(val('pollSec', 15) || 15)),
+          confirmMsg: String(val('confirmMsg','')),
+          sentText: val('sentText','SENT') || 'SENT',
+          failedText: val('failedText','FAILED') || 'FAILED',
+          sessionId: val('sessionId','default') || 'default',
+          phoneHeader: val('phoneHeader',''),
+          statusHeader: val('statusHeader',''),
+          writeBack: (document.getElementById('writeBack')?.checked !== false)
+        };
+        localStorage.setItem(cfgKey, JSON.stringify(j));
+        log('Config saved');
+        return j;
+      }
+
+      function toast(msg){ try { const c=document.getElementById('toasts'); if (!c) return; const t=document.createElement('div'); t.className='toast'; t.textContent=msg; c.appendChild(t); setTimeout(()=>{ t.remove(); }, 2500); } catch {}
+      }
+
+      function updateStartEnabled(){
+        try{
+          const ok = Boolean((document.getElementById('sessionId')?.value||'').trim()) && Boolean((document.getElementById('sheetId')?.value||'').trim()) && Boolean((document.getElementById('range')?.value||'').trim()) && Boolean((document.getElementById('confirmMsg')?.value||'').trim()) && Boolean((document.getElementById('phoneHeader')?.value||'').trim());
+          const btn = document.getElementById('start'); if (btn) btn.disabled = !ok;
+        }catch{}
+      }
+
+      $('#saveCfg').addEventListener('click', saveCfg);
+
+      function replaceVars(text, header, row){
+        let out = String(text||'');
+        out = out.replace(/\{date\}/g, new Date().toISOString().slice(0,10));
+        out = out.replace(/\{time\}/g, new Date().toTimeString().slice(0,5));
+        header.forEach((h,idx)=>{
+          if (!h) return; const re = new RegExp('\\{'+h+'\\}','g'); out = out.replace(re, String(row[idx]||''));
+        });
+        return out;
+      }
+
+      async function fetchSheet(sheetId, range){
+        const sheetTitle = document.getElementById('sheetTitle')?.value || '';
+        const a1 = sheetTitle ? `${sheetTitle}!${range}` : range;
+        const r = await fetch('/api/google-sheets/read',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ spreadsheetId: sheetId, range: a1 })});
+        if(!r.ok) throw new Error('read failed');
+        const j = await r.json();
+        return j.values||[];
+      }
+      async function updateCell(sheetId, a1, value){
+        const sheetTitle = document.getElementById('sheetTitle')?.value || '';
+        const full = sheetTitle && !a1.includes('!') ? `${sheetTitle}!${a1}` : a1;
+        const r = await fetch('/api/google-sheets/update',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ spreadsheetId: sheetId, range: full, values:[[value]] })});
+        if(!r.ok) throw new Error('update failed');
+        return await r.json();
+      }
+      async function sendMsg({sessionId='default', phone, message}){
+        const r = await fetch('/api/send-message',{method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sessionId, phone, message })});
+        return await r.json();
+      }
+
+      let timer=null; let header=[]; let lastHash='';
+      function computeHash(rows){
+        try{ return JSON.stringify(rows.slice(0,50)); }catch{ return String(Date.now()); }
+      }
+
+      function renderTable(header, rows){
+        $('#thead').innerHTML = header.map(h=>`<th>${h||''}</th>`).join('');
+        $('#tbody').innerHTML = rows.map(r=>`<tr>${header.map((_,i)=>`<td>${String(r[i]||'')}</td>`).join('')}</tr>`).join('');
+      }
+
+      function renderChips(){
+        const box = $('#chips'); if (!box) return; box.innerHTML = '';
+        header.forEach(h=>{ if (!h) return; const b=document.createElement('span'); b.className='chip'; b.textContent = `{${h}}`; b.addEventListener('click',()=>{ const ta=$('#confirmMsg'); ta.value += `{${h}}`; }); box.appendChild(b); });
+        const phoneSel = $('#phoneHeader'); const statusSel = $('#statusHeader');
+        if (phoneSel) phoneSel.innerHTML = '<option value="">Phone header…</option>' + header.map(h=>`<option value="${h}">${h}</option>`).join('');
+        if (statusSel) statusSel.innerHTML = '<option value="">Status header… (optional)</option>' + header.map(h=>`<option value="${h}">${h}</option>`).join('');
+      }
+
+      function highlightMissing(ids){ ids.forEach(id=>{ const el=document.getElementById(id); if (el){ el.style.boxShadow='0 0 0 3px rgba(239,68,68,.3)'; el.style.borderColor='#ef4444'; setTimeout(()=>{ el.style.boxShadow=''; el.style.borderColor=''; }, 1500); }}); }
+
+      async function poll(){
+        const cfg = saveCfg();
+        if(!cfg.sheetId||!cfg.range){
+          log('Please set Spreadsheet ID and Range');
+          highlightMissing([!cfg.sheetId?'sheetId':null, !cfg.range?'range':null].filter(Boolean));
+          alert('Please fill Spreadsheet ID and Range, then click Connect & Fetch Header.');
+          return;
+        }
+        const values = await fetchSheet(cfg.sheetId, cfg.range);
+        if (!values.length){ log('No data'); return; }
+        const headIdx = Math.max(1, cfg.headerRow) - 1;
+        const rawHeader = values[headIdx] || [];
+        const maxLen = values.reduce((m,r)=> Math.max(m, Array.isArray(r) ? r.length : 0), 0);
+        const colLetter = (n)=>{ let s=''; while(n>=0){ s=String.fromCharCode(n%26+65)+s; n=Math.floor(n/26)-1; } return s; };
+        header = Array.from({ length: maxLen }, (_,i)=> String(rawHeader[i] ?? `Column ${colLetter(i)}`));
+        const dataRows = values.slice(Math.max(cfg.startRow-1, 0)).map(row => Array.from({ length: maxLen }, (_,i)=> (row?.[i] ?? '')));
+        renderTable(header, dataRows);
+        renderChips();
+        // Stats
+        try {
+          const phoneHeaderName = document.getElementById('phoneHeader')?.value || '';
+          const eligible = dataRows.filter(r=>{
+            const phone = String(r[phoneColIdx]||'').replace(/\D+/g,'');
+            const statusOk = statusColIdx === null || !String(r[statusColIdx]||'').trim();
+            return phone && statusOk;
+          }).length;
+          const ps = document.getElementById('previewStats');
+          if (ps) ps.innerHTML = [
+            `<span class="badge">Headers: <b>${header.length}</b></span>`,
+            `<span class="badge">Rows: <b>${dataRows.length}</b></span>`,
+            `<span class="badge">Eligible: <b>${eligible}</b></span>`,
+            phoneHeaderName ? `<span class="badge">Phone: <b>${phoneHeaderName}</b></span>` : ''
+          ].join('');
+          const pend = document.getElementById('cntPend'); if (pend) pend.textContent = String(eligible);
+        } catch {}
+
+        const h = computeHash(dataRows);
+        if (h !== lastHash){ lastHash = h; log('Data refreshed'); }
+
+        // Process rows that need confirmation: empty status
+        const phoneColIdx = (()=>{
+          const hdr = $('#phoneHeader')?.value; if (hdr){ const idx = header.findIndex(h=>h===hdr); if (idx>=0) return idx; }
+          return Math.max(1, cfg.phoneCol) - 1;
+        })();
+        const statusColIdx = (()=>{
+          const hdr = $('#statusHeader')?.value; if (hdr){ const idx = header.findIndex(h=>h===hdr); if (idx>=0) return idx; }
+          return cfg.statusCol ? Math.max(1, cfg.statusCol) - 1 : null;
+        })();
+        let processed = 0, skipped = 0;
+        for (let i=0;i<dataRows.length;i++){
+          const row = dataRows[i];
+          const phoneRaw = String(row[phoneColIdx]||'').replace(/\D+/g,'');
+          if (!phoneRaw) { skipped++; log(`Row ${i+1}: No phone number found`); continue; }
+          const fullPhone = (cfg.countryCode||'') + phoneRaw;
+          // status check
+          if (statusColIdx !== null && String(row[statusColIdx]||'').trim()){ skipped++; log(`Row ${i+1}: Already has status '${row[statusColIdx]}'`); continue; }
+          const msg = replaceVars(cfg.confirmMsg, header, row);
+          if (!msg) { skipped++; log(`Row ${i+1}: Empty message after variable replacement`); continue; }
+          processed++;
+          try{
+            await sendMsg({ sessionId: cfg.sessionId || 'default', phone: fullPhone, message: msg });
+            addReport({ row: i + (cfg.startRow||2), phone: fullPhone, status: 'SENT', note: '' });
+            if (statusColIdx !== null && (document.getElementById('writeBack')?.checked !== false)){
+              const a1 = (()=>{ // compute A1 for status cell
+                const startRowIndex = cfg.startRow; // 1-based
+                const statusRow = startRowIndex + i; // 1-based row number in sheet
+                const colLetter = (n)=>{ let s=''; while(n>=0){ s=String.fromCharCode(n%26+65)+s; n=Math.floor(n/26)-1; } return s; };
+                const sheet = document.getElementById('sheetTitle')?.value || cfg.range.split('!')[0] || 'Sheet1';
+                return `${sheet}!${colLetter(statusColIdx)}${statusRow}`;
+              })();
+              await updateCell(cfg.sheetId, a1, cfg.sentText || 'SENT');
+            }
+          }catch(e){ addReport({ row: i + (cfg.startRow||2), phone: fullPhone, status: 'FAILED', note: e.message });
+            if (statusColIdx !== null && (document.getElementById('writeBack')?.checked !== false)){
+              try{
+                const a1 = (()=>{ const startRowIndex = cfg.startRow; const statusRow = startRowIndex + i; const colLetter=(n)=>{ let s=''; while(n>=0){ s=String.fromCharCode(n%26+65)+s; n=Math.floor(n/26)-1; } return s; }; const sheet = document.getElementById('sheetTitle')?.value || cfg.range.split('!')[0] || 'Sheet1'; return `${sheet}!${colLetter(statusColIdx)}${statusRow}`; })();
+                await updateCell(cfg.sheetId, a1, cfg.failedText || 'FAILED');
+              }catch{}
+            }
+          }
+        }
+        log(`Poll complete: processed ${processed}, skipped ${skipped}, total ${dataRows.length}`);
+      }
+
+      function addReport({row, phone, status, note}){
+        const tr = document.createElement('tr');
+        const time = new Date().toLocaleTimeString();
+        tr.innerHTML = `<td>${time}</td><td>${row}</td><td>${phone}</td><td class="${status==='SENT'?'status-ok':'status-fail'}">${status}</td><td>${note||''}</td>`;
+        const tb = $('#reportBody'); tb.prepend(tr);
+        try{
+          const s = document.getElementById('cntSent'); const f = document.getElementById('cntFail'); const p = document.getElementById('cntPend');
+          if (status==='SENT' && s) s.textContent = String(Number(s.textContent||'0')+1);
+          if (status!=='SENT' && f) f.textContent = String(Number(f.textContent||'0')+1);
+          if (p) p.textContent = String(Math.max(0, Number(p.textContent||'0')-1));
+        }catch{}
+      }
+
+      // Multi tasks (multiple sheets)
+      let runningTasks = new Map();
+      function loadTasks(){
+        try{ const arr = JSON.parse(localStorage.getItem(tasksKey)||'[]'); renderTasks(arr); }catch{ renderTasks([]); }
+      }
+      function saveTaskFromCurrent(){
+        const j = saveCfg();
+        const name = prompt('Task name?'); if (!name) return;
+        const arr = JSON.parse(localStorage.getItem(tasksKey)||'[]');
+        arr.push({ name, ...j });
+        localStorage.setItem(tasksKey, JSON.stringify(arr));
+        renderTasks(arr);
+      }
+      function renderTasks(arr){
+        const tb = $('#tasksBody'); if (!tb) return; tb.innerHTML = '';
+        (arr||[]).forEach((t,idx)=>{
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${t.name}</td><td>${t.sessionId||'default'}</td><td>${t.range}</td><td>${t.pollSec||15}</td><td>${runningTasks.has(idx)?'Running':'Idle'}</td><td>
+            <button class="btn small" data-act="run" data-idx="${idx}">Run</button>
+            <button class="btn small ghost" data-act="stop" data-idx="${idx}">Stop</button>
+            <button class="btn small ghost" data-act="load" data-idx="${idx}">Load</button>
+            <button class="btn small ghost" data-act="del" data-idx="${idx}">Delete</button>
+          </td>`;
+          tb.appendChild(tr);
+        });
+      }
+      document.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button'); if (!btn) return;
+        const act = btn.getAttribute('data-act'); if (!act) return;
+        const idx = Number(btn.getAttribute('data-idx'));
+        const arr = JSON.parse(localStorage.getItem(tasksKey)||'[]');
+        const t = arr[idx]; if (!t) return;
+        if (act==='run') { startTask(idx, t); }
+        if (act==='stop') { stopTask(idx); }
+        if (act==='load') { localStorage.setItem(cfgKey, JSON.stringify(t)); loadCfg(); }
+        if (act==='del') { arr.splice(idx,1); localStorage.setItem(tasksKey, JSON.stringify(arr)); renderTasks(arr); }
+      });
+      async function tickTask(idx, t){
+        try{
+          const values = await fetchSheet(t.sheetId, t.range);
+          const headIdx = Math.max(1, t.headerRow||1) - 1;
+          const hdr = values[headIdx] || [];
+          const rows = values.slice(Math.max((t.startRow||2)-1,0));
+          const phoneColIdx = Math.max(1, t.phoneCol||1) - 1;
+          const statusColIdx = t.statusCol ? Math.max(1, t.statusCol) - 1 : null;
+          for (let i=0;i<rows.length;i++){
+            const row = rows[i];
+            const phoneRaw = String(row[phoneColIdx]||'').replace(/\D+/g,'');
+            if (!phoneRaw) continue;
+            if (statusColIdx !== null && String(row[statusColIdx]||'').trim()) continue;
+            const msg = replaceVars(t.confirmMsg||'', hdr, row); if (!msg) continue;
+            const fullPhone = (t.countryCode||'') + phoneRaw;
+            try{
+              await sendMsg({ sessionId: t.sessionId||'default', phone: fullPhone, message: msg });
+              if (statusColIdx !== null){
+                const a1 = (()=>{ const startRowIndex = t.startRow||2; const statusRow = startRowIndex + i; const colLetter=(n)=>{ let s=''; while(n>=0){ s=String.fromCharCode(n%26+65)+s; n=Math.floor(n/26)-1; } return s; }; return `${t.range.split('!')[0]}!${colLetter(statusColIdx)}${statusRow}`; })();
+                await updateCell(t.sheetId, a1, t.sentText||'SENT');
+              }
+            }catch{}
+          }
+        }catch{}
+      }
+      function startTask(idx, t){ stopTask(idx); const ms = Math.max(3, Number(t.pollSec||15))*1000; const id = setInterval(()=>tickTask(idx,t), ms); runningTasks.set(idx, id); renderTasks(JSON.parse(localStorage.getItem(tasksKey)||'[]')); tickTask(idx,t); }
+      function stopTask(idx){ const id = runningTasks.get(idx); if (id) { clearInterval(id); runningTasks.delete(idx); renderTasks(JSON.parse(localStorage.getItem(tasksKey)||'[]')); } }
+
+      $('#pollNow').addEventListener('click', poll);
+      $('#start').addEventListener('click', ()=>{ if (timer) clearInterval(timer); const sec=Math.max(3, Number($('#pollSec').value||15)); timer=setInterval(poll, sec*1000); poll(); });
+      $('#stop').addEventListener('click', ()=>{ if (timer) clearInterval(timer); timer=null; log('Stopped'); });
+      $('#fetchHeader').addEventListener('click', async ()=>{ try { await poll(); toast('Connected and header fetched'); updateStartEnabled(); } catch(e) { log(String(e)); } });
+      $('#testSend').addEventListener('click', async ()=>{
+        try{
+          const cfg = saveCfg();
+          const values = await fetchSheet(cfg.sheetId, cfg.range);
+          const headIdx = Math.max(1, cfg.headerRow) - 1; const hdr = values[headIdx]||[]; const first = values[Math.max(cfg.startRow-1,0)]||[];
+          const msg = replaceVars(cfg.confirmMsg, hdr, first);
+          toast('Preview built from first row');
+          setTimeout(()=>{ alert('Preview message based on first row:\n\n'+msg); }, 100);
+        }catch(e){ alert('Failed to preview: '+e.message); }
+      });
+      $('#saveTask').addEventListener('click', saveTaskFromCurrent);
+      document.getElementById('exportCsv').addEventListener('click', ()=>{
+        try{
+          const rows = [['Time','Row','Phone','Status','Note']];
+          document.querySelectorAll('#reportBody tr').forEach(tr=>{
+            const tds = Array.from(tr.querySelectorAll('td')).map(td=>td.textContent||'');
+            rows.push(tds);
+          });
+          const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+          const blob = new Blob([csv], { type:'text/csv' });
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'report.csv'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 500);
+        }catch(e){ alert('Export failed: '+e.message); }
+      });
+      document.getElementById('fetchSheets').addEventListener('click', async ()=>{
+        try{
+          const id = document.getElementById('sheetId').value.trim();
+          if (!id) return alert('Enter Spreadsheet ID first');
+          const res = await fetch(`/api/google-sheets/sheet-titles?spreadsheetId=${encodeURIComponent(id)}`);
+          const j = await res.json();
+          const sel = document.getElementById('sheetTitle');
+          sel.innerHTML = '<option value="">Sheet…</option>' + (j.titles||[]).map(t=>`<option value="${t}">${t}</option>`).join('');
+          if ((j.titles||[]).length) sel.value = j.titles[0];
+        }catch(e){ alert('Failed to list sheets: '+e.message); }
+      });
+      $('#refreshSessions').addEventListener('click', ()=>{ loadSessions().then(()=>toast('Sessions refreshed')); });
+      // Enable/disable Start button based on inputs
+      ['sessionId','sheetId','range','confirmMsg','phoneHeader','statusHeader'].forEach(id=>{ const el=document.getElementById(id); if (el) el.addEventListener('input', updateStartEnabled); });
+      // Initial load
+      loadSessions(); loadCfg(); loadTasks(); updateStartEnabled();
+    </script>
+  </body>
+</html>
+
+

@@ -1,0 +1,478 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Group Number Extractor</title>
+    <link rel="stylesheet" href="/public/nav.css" />
+    <link rel="stylesheet" href="dark-theme.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: -apple-system, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        background: #020617;
+        color: #e5e7eb;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      .card {
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.7);
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .header h2 {
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .muted {
+        color: #9ca3af;
+        font-size: 13px;
+      }
+      .inline {
+        display: flex;
+        gap: 12px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .form-group {
+        margin-bottom: 16px;
+        min-width: 220px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        background: rgba(15, 23, 42, 0.9);
+        color: #e5e7eb;
+        box-sizing: border-box;
+      }
+      .form-group input:focus,
+      .form-group select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 1px rgba(79, 70, 229, 0.6);
+      }
+      .action-btn {
+        padding: 10px 16px;
+        border-radius: 12px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+      .action-btn.primary {
+        background: linear-gradient(135deg, #4f46e5, #22c55e);
+        color: white;
+      }
+      .action-btn.secondary {
+        background: rgba(15, 23, 42, 0.95);
+        color: #e5e7eb;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+      }
+      .results-section {
+        margin-top: 24px;
+        border-radius: 14px;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        padding: 16px;
+        background: rgba(15, 23, 42, 0.9);
+      }
+      .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .results-list {
+        max-height: 420px;
+        overflow-y: auto;
+        border-radius: 10px;
+        border: 1px solid rgba(30, 64, 175, 0.5);
+      }
+      .result-item {
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(30, 64, 175, 0.35);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      .result-item:last-child {
+        border-bottom: none;
+      }
+      .phone-number {
+        font-family: monospace;
+        font-weight: 600;
+        color: #a5b4fc;
+        min-width: 130px;
+      }
+      .source-badge {
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .source-group {
+        background: rgba(30, 64, 175, 0.3);
+        color: #bfdbfe;
+      }
+      .chat-title {
+        font-weight: 500;
+      }
+      .chat-type {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+      .group-list {
+        max-height: 240px;
+        overflow-y: auto;
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        border-radius: 10px;
+        padding: 8px;
+        background: rgba(15, 23, 42, 0.8);
+      }
+      .group-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .group-item:last-child {
+        border-bottom: none;
+      }
+      .group-item input[type="checkbox"] {
+        margin: 0;
+        accent-color: #4f46e5;
+      }
+      .group-meta {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+      .group-actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="/public/nav.js"></script>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h2>👥 Group Number Extractor</h2>
+          <p class="muted">Scan only WhatsApp groups to collect unique members’ phone numbers.</p>
+        </div>
+        <div>
+          <a href="extractor.html" style="text-decoration:none;">
+            <button class="action-btn secondary" type="button">
+              ← All Chats Extractor
+            </button>
+          </a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inline">
+          <div class="form-group">
+            <label>Select Session</label>
+            <select id="sessionSel">
+              <option value="">Choose a WhatsApp session...</option>
+            </select>
+            <p class="muted">Make sure the selected session is connected and ready.</p>
+          </div>
+          <div class="form-group">
+            <label>Messages per group to scan</label>
+            <input id="samplePerChat" type="number" min="0" value="30" placeholder="Messages per group" />
+            <span class="muted">0 = only participants, no message text scanning.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="groupNameFilter">Group name filter (optional)</label>
+          <input id="groupNameFilter" type="text" placeholder="e.g. VIP, Clients, Offers" />
+          <span class="muted">Comma-separated; only groups whose name contains any of these words will be included.</span>
+        </div>
+
+        <div class="form-group">
+          <label>Choose groups to scan</label>
+          <div class="group-actions">
+            <input id="groupSearch" type="text" placeholder="Search groups..." style="flex:1;" />
+            <button id="selectAllGroups" type="button" class="action-btn secondary" style="padding:6px 12px;">Select all</button>
+            <button id="clearGroupSelection" type="button" class="action-btn secondary" style="padding:6px 12px;">Clear</button>
+          </div>
+          <div id="groupList" class="group-list">
+            <span class="muted">Select a session to load groups.</span>
+          </div>
+          <span class="muted">Leave all unchecked to scan every group (subject to filters).</span>
+        </div>
+
+        <div class="inline">
+          <button id="scanBtn" class="action-btn primary" type="button">
+            🔍 Scan Groups
+          </button>
+          <a id="exportLink" href="#" style="text-decoration:none; display:none;">
+            <button class="action-btn secondary" type="button">
+              ⬇️ Export CSV
+            </button>
+          </a>
+          <span id="status" class="muted"></span>
+        </div>
+
+        <div class="results-section" id="resultsSection" style="display:none;">
+          <div class="results-header">
+            <div>
+              <strong><span id="count">0</span> unique numbers found</strong>
+            </div>
+          </div>
+          <div class="results-list" id="list"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentGroups = [];
+
+      function escapeHtml(str = '') {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function getGroupListElement() {
+        return document.getElementById('groupList');
+      }
+
+      function getSelectedGroupIds() {
+        return Array.from(document.querySelectorAll('.group-checkbox'))
+          .filter(cb => cb.checked)
+          .map(cb => cb.value);
+      }
+
+      function renderGroupList() {
+        const listEl = getGroupListElement();
+        const previouslySelected = new Set(
+          Array.from(listEl.querySelectorAll('.group-checkbox'))
+            .filter(cb => cb.checked)
+            .map(cb => cb.value)
+        );
+        listEl.innerHTML = '';
+
+        if (!currentGroups.length) {
+          const span = document.createElement('span');
+          span.className = 'muted';
+          span.textContent = 'No groups found for this session.';
+          listEl.appendChild(span);
+          return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        currentGroups.forEach(group => {
+          const label = document.createElement('label');
+          label.className = 'group-item';
+          label.setAttribute('data-title', String(group.title || '').toLowerCase());
+
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.className = 'group-checkbox';
+          checkbox.value = group.id;
+          checkbox.checked = previouslySelected.has(group.id);
+
+          const infoWrap = document.createElement('div');
+          const titleDiv = document.createElement('div');
+          titleDiv.className = 'chat-title';
+          titleDiv.innerHTML = escapeHtml(group.title || 'Unnamed Group');
+
+          const metaDiv = document.createElement('div');
+          metaDiv.className = 'group-meta';
+          metaDiv.textContent = `${group.participants || 0} members • ${group.unreadCount || 0} unread`;
+
+          infoWrap.appendChild(titleDiv);
+          infoWrap.appendChild(metaDiv);
+
+          label.appendChild(checkbox);
+          label.appendChild(infoWrap);
+
+          fragment.appendChild(label);
+        });
+
+        listEl.appendChild(fragment);
+        filterGroupList(document.getElementById('groupSearch').value || '');
+      }
+
+      function filterGroupList(term) {
+        const listEl = getGroupListElement();
+        const normalized = String(term || '').trim().toLowerCase();
+        const items = listEl.querySelectorAll('.group-item');
+
+        listEl.querySelectorAll('.group-empty').forEach(el => el.remove());
+
+        if (!items.length) return;
+
+        let visible = 0;
+        items.forEach(item => {
+          const title = item.getAttribute('data-title') || '';
+          const match = !normalized || title.includes(normalized);
+          item.style.display = match ? 'flex' : 'none';
+          if (match) visible += 1;
+        });
+
+        if (visible === 0) {
+          const span = document.createElement('span');
+          span.className = 'muted group-empty';
+          span.textContent = 'No groups match your search.';
+          listEl.appendChild(span);
+        }
+      }
+
+      async function loadSessions() {
+        const res = await fetch('/api/sessions');
+        const data = await res.json();
+        const s = document.getElementById('sessionSel');
+        s.innerHTML = '';
+        (data.sessions || []).forEach(x => {
+          const o = document.createElement('option');
+          o.value = x.id;
+          o.textContent = `${x.id} ${x.ready ? '(ready)' : ''}`;
+          s.appendChild(o);
+        });
+      }
+
+      async function loadGroupsForSession(sessionId) {
+        currentGroups = [];
+        const listEl = getGroupListElement();
+        listEl.innerHTML = '<span class="muted">Loading groups...</span>';
+        if (!sessionId) return;
+        try {
+          const res = await fetch(`/api/extract/groups?sessionId=${encodeURIComponent(sessionId)}`);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to load groups');
+          currentGroups = data.groups || [];
+          renderGroupList();
+        } catch (err) {
+          listEl.innerHTML = `<span class="muted">Unable to load groups: ${escapeHtml(err.message)}</span>`;
+        }
+      }
+
+      function selectAllGroups() {
+        document.querySelectorAll('.group-checkbox').forEach(cb => {
+          cb.checked = true;
+        });
+      }
+
+      function clearGroupSelection() {
+        document.querySelectorAll('.group-checkbox').forEach(cb => {
+          cb.checked = false;
+        });
+      }
+
+      async function scan() {
+        const sessionId = document.getElementById('sessionSel').value;
+        if (!sessionId) return;
+        const samplePerChat = Number(document.getElementById('samplePerChat').value) || 0;
+        const groupNameFilterInput = document.getElementById('groupNameFilter').value || '';
+        const groupNameFilter = groupNameFilterInput
+          .split(',')
+          .map(s => s.trim())
+          .filter(s => s.length > 0);
+        const groupIds = getSelectedGroupIds();
+
+        const statusEl = document.getElementById('status');
+        statusEl.textContent = 'Scanning groups...';
+
+        const res = await fetch('/api/extract/scan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            samplePerChat,
+            groupsOnly: true,
+            groupNameFilter,
+            groupIds
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          statusEl.textContent = data.error || 'Scan failed';
+          return;
+        }
+
+        const r = await fetch(`/api/extract/result/${data.id}`).then(r => r.json());
+        document.getElementById('count').textContent = r.unique;
+        const list = document.getElementById('list');
+        list.innerHTML = '';
+
+        (r.rows || []).slice(0, 500).forEach(row => {
+          const li = document.createElement('div');
+          li.className = 'result-item';
+          li.innerHTML = `
+            <div class="phone-number">${row.phone}</div>
+            <div class="source-badge source-group">${row.source || 'group'}</div>
+            <div>
+              <div class="chat-title">${escapeHtml(row.chat_title || 'Unknown Group')}</div>
+              <div class="chat-type">${escapeHtml(row.type || 'group')}</div>
+            </div>
+          `;
+          list.appendChild(li);
+        });
+
+        const link = document.getElementById('exportLink');
+        link.href = `/api/extract/export/${data.id}.csv`;
+        link.style.display = 'inline-block';
+
+        document.getElementById('resultsSection').style.display = 'block';
+        statusEl.textContent = 'Complete';
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        loadSessions();
+        const btn = document.getElementById('scanBtn');
+        if (btn) btn.addEventListener('click', scan);
+
+        const sessionSel = document.getElementById('sessionSel');
+        sessionSel.addEventListener('change', (e) => {
+          loadGroupsForSession(e.target.value);
+        });
+
+        const searchInput = document.getElementById('groupSearch');
+        searchInput.addEventListener('input', (e) => {
+          filterGroupList(e.target.value);
+        });
+
+        document.getElementById('selectAllGroups').addEventListener('click', selectAllGroups);
+        document.getElementById('clearGroupSelection').addEventListener('click', clearGroupSelection);
+      });
+    </script>
+  </body>
+</html>
+
