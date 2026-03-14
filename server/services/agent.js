@@ -1,5 +1,3 @@
-import Database from 'better-sqlite3';
-
 function cosineSim(a, b) {
   let dot = 0, na = 0, nb = 0;
   const len = Math.min(a.length, b.length);
@@ -20,8 +18,8 @@ function buildSparse(tokens) {
 }
 
 export class AgentManager {
-  constructor(dbPath) {
-    this.db = new Database(dbPath);
+  constructor(db) {
+    this.db = db;
     this.initialize();
   }
 

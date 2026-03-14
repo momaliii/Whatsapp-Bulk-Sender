@@ -1,8 +1,6 @@
-import Database from 'better-sqlite3';
-
 export class AutoReplyManager {
-  constructor(dbPath) {
-    this.db = new Database(dbPath);
+  constructor(db) {
+    this.db = db;
     this.initialize();
   }
 
